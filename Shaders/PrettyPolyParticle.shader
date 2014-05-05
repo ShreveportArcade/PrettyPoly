@@ -1,5 +1,4 @@
-﻿Shader "PrettyPoly/Particle" 
-{
+﻿Shader "PrettyPoly/Particle" {
 	Properties { 
 		_MainTex ("Texture", 2D) = "white" {}
 		_Color ("Color", Color) = (1,1,1,1)
@@ -46,8 +45,7 @@
 			
 			uniform float4 _MainTex_ST;
 			
-			v2f vert (appdata_t v)
-			{
+			v2f vert (appdata_t v) {
 				v2f o;
 
 				half delay = fmod(_Duration.x * v.color.b, 1);
