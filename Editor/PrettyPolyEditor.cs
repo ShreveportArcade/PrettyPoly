@@ -80,6 +80,8 @@ public class PrettyPolyEditor : Editor {
 				
 				Handles.color = Color.white;
 				GUI.SetNextControlName("pretty poly point " + i);
+				if (i == 0) Handles.color = Color.magenta;
+				if (i == 1) Handles.color = Color.green;
 				point.position = Handles.FreeMoveHandle(
 					point.position, 
 					Quaternion.identity, 

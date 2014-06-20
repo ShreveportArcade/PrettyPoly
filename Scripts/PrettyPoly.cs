@@ -8,6 +8,9 @@ namespace PrettyPoly {
 [RequireComponent(typeof(MeshFilter))]
 public class PrettyPoly : MonoBehaviour {
 
+	public delegate void OnCollision2DCallback(Collision2D collision, PrettyPolyLayer layer);
+	public static event OnCollision2DCallback onCollision2D = delegate{};
+
 	public bool closed = false;
 	public bool addCollider = false;
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
@@ -163,6 +166,17 @@ public class PrettyPoly : MonoBehaviour {
 		UpdateRenderer();
 
 		if (addCollider) AddCollider(pts);
+	}
+
+	void OnCollisionEnter2D (Collision2D collision) {
+		Vector2 norm = -collision.contacts[0].normal;
+
+		for (int i = 0; i < layers.Length; i++) { 
+			PrettyPolyLayer layer = layers[i];
+			if (layer.isTrigger && layer.ExistsInDirection(norm)) {
+				onCollision2D(collision, layer);
+			}
+		}
 	}
 }
 }

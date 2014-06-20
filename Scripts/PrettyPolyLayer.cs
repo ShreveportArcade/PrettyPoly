@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Paraphernalia.Extensions;
 using Paraphernalia.Utils;
+using Paraphernalia.Math;
 
 namespace PrettyPoly {
 [System.Serializable]
@@ -10,6 +11,7 @@ public class PrettyPolyLayer {
 	public string name = "New Layer";
 	public Sprite sprite;
 	public int materialIndex = 0;
+	public bool isTrigger = false;
 	public enum LayerType {
 		Stroke,
 		Line,
@@ -116,19 +118,13 @@ public class PrettyPolyLayer {
 		};
 	}
 
-	public Bounds GetBounds (Vector3[] points) {
-		Bounds b = new Bounds();
-		Vector3 max = points[0];
-		Vector3 min = points[0];
-		for (int i = 1; i < points.Length; i++) {
-			Vector3 p = points[i];
-			if (p.x > max.x) max.x = p.x;
-			else if (p.x < min.x) min.x = p.x;
-			else if (p.y > max.y) max.y = p.y;
-			else if (p.y < min.y) min.y = p.y;
-		}
-		b.SetMinMax(min, max);
-		return b;
+	public Color GetShiftedColor (Color color, float t) {
+		Vector4 hsv = ColorUtils.RGBtoHSV(color);
+		hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f + hueOffsets.Evaluate(t)) % 1f);
+		hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation) + saturationOffsets.Evaluate(t));
+		hsv.z = Mathf.Clamp01(hsv.z + Random.Range(-valueVariation,valueVariation) + valueOffsets.Evaluate(t));
+		hsv.w = Mathf.Clamp01(hsv.w + Random.Range(-alphaVariation,alphaVariation) + alphaOffsets.Evaluate(t));
+		return ColorUtils.HSVtoRGB(hsv);
 	}
 
 	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed, float winding) {
@@ -184,9 +180,7 @@ public class PrettyPolyLayer {
 			Vector3 dir = (next - curr).normalized;
 			Vector3 normal = -Vector3.forward;
 			Vector3 outward = Vector3.Cross(dir, normal);
-			float dev = -Vector3.Dot(outward, naturalDirection);
-			if (dev > 1 - angularPlacementRange * 2) return;
-
+			if (!ExistsInDirection(outward)) return;
 			
 			distTraveled += dist;
 		}
@@ -201,12 +195,20 @@ public class PrettyPolyLayer {
 		}
 	}
 
+	public bool ExistsInDirection (Vector2 dir) {
+		float dev = -Vector3.Dot(dir, naturalDirection);
+		return (dev <= 1 - angularPlacementRange * 2);
+	}
+
 	public void AddStrokeSegment (Vector3 a, Vector3 b, float pathLength, ref float distTraveled, ref int index) {	
+		Vector3 dir = (b - a).normalized;
+		Vector3 outward = Vector3.Cross(dir, -Vector3.forward);
+		if (!ExistsInDirection(outward)) return;
+			
 		float segLen = size * 2 * spacing;
 		float dist = Vector3.Distance(a, b);
 		if (dist < segLen) return;
 		
-		Vector3 dir = (b - a).normalized;
 		float segments = dist / segLen;
 
 		for (int i = 0; i < segments; i++) {
@@ -222,9 +224,6 @@ public class PrettyPolyLayer {
 		if (placementFrequency < Random.value) return;
 
 		Vector3 normal = -Vector3.forward;
-		Vector3 outward = Vector3.Cross(dir, normal);
-		float dev = -Vector3.Dot(outward, naturalDirection);
-		if (dev > 1 - angularPlacementRange * 2) return;
 
 		Random.seed = index + seed;
 
@@ -235,7 +234,6 @@ public class PrettyPolyLayer {
 			if (Vector3.Dot(Vector3.up, normal) > 0) dir = Vector3.Cross(-Vector3.up, normal).normalized;
 			else dir = Vector3.Cross(Vector3.right, normal).normalized;
 		}
-
 
 		dir = Quaternion.AngleAxis(a + Random.Range(-angleVariation, angleVariation), normal) * dir;
 		Vector3 right = Vector3.Cross(dir, normal);
@@ -256,12 +254,8 @@ public class PrettyPolyLayer {
 		});
 		
 		uvs.AddRange(GetSpriteUVs());
-		Vector4 hsv = ColorUtils.RGBtoHSV(color);
-		hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f + hueOffsets.Evaluate(t)) % 1f);
-		hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation) + saturationOffsets.Evaluate(t));
-		hsv.z = Mathf.Clamp01(hsv.z + Random.Range(-valueVariation,valueVariation) + valueOffsets.Evaluate(t));
-		hsv.w = Mathf.Clamp01(hsv.w + Random.Range(-alphaVariation,alphaVariation) + alphaOffsets.Evaluate(t));
-		Color c = ColorUtils.HSVtoRGB(hsv);
+		
+		Color c = GetShiftedColor(color, t);
 		colors.AddRange(new Color[] {c, c, c, c});
 
 		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
@@ -275,34 +269,43 @@ public class PrettyPolyLayer {
 	}
 
 	public void AddInnerFill (Vector3[] points, float pathLength) {
-		verts.AddRange(points);
 
-		float p = 0;
-		for (int i = 0; i < points.Length; i++) {
-			norms.Add(-Vector3.forward);
-			tans.Add(Vector3.right);
+		int offset = 0;
+		// Polygon[] polys = (new Polygon(points)).Subdivide(Vector2.one * 5);
+		// Polygon[] polys = (new Polygon(points)).TestSplit();
+		Polygon[] polys = new Polygon[]{new Polygon(points)};
+		// Debug.Log(polys.Length);
 
-			float t = p / pathLength;
-			Vector4 hsv = ColorUtils.RGBtoHSV(color);
-			hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f + hueOffsets.Evaluate(t)) % 1f);
-			hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation) + saturationOffsets.Evaluate(t));
-			hsv.z = Mathf.Clamp01(hsv.z + Random.Range(-valueVariation,valueVariation) + valueOffsets.Evaluate(t));
-			hsv.w = Mathf.Clamp01(hsv.w + Random.Range(-alphaVariation,alphaVariation) + alphaOffsets.Evaluate(t));
-			colors.Add(ColorUtils.HSVtoRGB(hsv));
+		foreach (Polygon poly in polys) {
+			Vector3[] v = System.Array.ConvertAll(poly.path, pt => new Vector3(pt.x, pt.y, poly.z));
+			verts.AddRange(v);
 
-			Vector3 p1 = points[i];
-			Vector3 p2 = points[(i+1) % points.Length];
-			p += Vector3.Distance(p1, p2);
+			float p = 0;
+			// Color randC = ColorUtils.Random(1);
+			for (int i = 0; i < v.Length; i++) {
+				norms.Add(-Vector3.forward);
+				tans.Add(Vector3.right);
+
+				// colors.Add(randC);
+				float frac = p / pathLength;
+				colors.Add(GetShiftedColor(color, frac));
+
+				Vector3 p1 = v[i];
+				Vector3 p2 = v[(i+1) % v.Length];
+				p += Vector3.Distance(p1, p2);
+			}
+
+			Bounds b = v.GetBounds();
+			float size = Mathf.Max(b.max.x - b.min.x, b.max.y - b.min.y);
+			for (int i = 0; i < v.Length; i++) {
+				Vector3 pt = (v[i] - b.min) / size;
+				uvs.Add((Vector2)pt);
+			}
+
+			int[] t = System.Array.ConvertAll(Triangulator.Triangulate(v), r => r + offset);
+			tris.AddRange(t);
+			offset += v.Length;
 		}
-
-		Bounds b = GetBounds(points);
-		float size = Mathf.Max(b.max.x - b.min.x, b.max.y - b.min.y);
-		for (int i = 0; i < points.Length; i++) {
-			Vector3 pt = (points[i] - b.min) / size;
-			uvs.Add((Vector2)pt);
-		}
-
-		tris.AddRange(Triangulator.Triangulate(points));
 	}
 
 	public void AddOuterFill (Vector3[] points, float pathLength) {
