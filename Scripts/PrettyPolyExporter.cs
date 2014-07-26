@@ -8,6 +8,8 @@ public class PrettyPolyExporter : MonoBehaviour {
 
 	[ContextMenu("Export Scene")]
 	public void ExportScene () {
+
+		// this doesn't seem to work for very complex things, consider another way to export
 		ColladaExporter exporter = new ColladaExporter(Application.dataPath + "/exporter.dae", true);
 
 		foreach (MeshFilter meshFilter in meshFilters) {

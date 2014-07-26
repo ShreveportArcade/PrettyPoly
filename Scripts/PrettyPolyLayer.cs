@@ -8,6 +8,8 @@ namespace PrettyPoly {
 [System.Serializable]
 public class PrettyPolyLayer {
 
+	public float minTileSize = 100;
+
 	public string name = "New Layer";
 	public Sprite sprite;
 	public int materialIndex = 0;
@@ -271,9 +273,9 @@ public class PrettyPolyLayer {
 	public void AddInnerFill (Vector3[] points, float pathLength) {
 
 		int offset = 0;
-		// Polygon[] polys = (new Polygon(points)).Subdivide(Vector2.one * 5);
-		// Polygon[] polys = (new Polygon(points)).TestSplit();
-		Polygon[] polys = new Polygon[]{new Polygon(points)};
+		// Polygon[] polys = (new Polygon(points)).Subdivide(Vector2.one * 5); //		HOPE
+		// Polygon[] polys = (new Polygon(points)).TestSplit(); //						TEST
+		Polygon[] polys = new Polygon[]{new Polygon(points)}; // 						NROMAL
 		// Debug.Log(polys.Length);
 
 		foreach (Polygon poly in polys) {
@@ -281,14 +283,14 @@ public class PrettyPolyLayer {
 			verts.AddRange(v);
 
 			float p = 0;
-			// Color randC = ColorUtils.Random(1);
+			// Color randC = ColorUtils.Random(1); //									TEST
 			for (int i = 0; i < v.Length; i++) {
 				norms.Add(-Vector3.forward);
 				tans.Add(Vector3.right);
 
-				// colors.Add(randC);
-				float frac = p / pathLength;
-				colors.Add(GetShiftedColor(color, frac));
+				// colors.Add(randC); //												TEST
+				float frac = p / pathLength; //											NORMAL
+				colors.Add(GetShiftedColor(color, frac)); //							NORMAL
 
 				Vector3 p1 = v[i];
 				Vector3 p2 = v[(i+1) % v.Length];
@@ -297,6 +299,7 @@ public class PrettyPolyLayer {
 
 			Bounds b = v.GetBounds();
 			float size = Mathf.Max(b.max.x - b.min.x, b.max.y - b.min.y);
+			if (size < minTileSize) size = minTileSize;
 			for (int i = 0; i < v.Length; i++) {
 				Vector3 pt = (v[i] - b.min) / size;
 				uvs.Add((Vector2)pt);
