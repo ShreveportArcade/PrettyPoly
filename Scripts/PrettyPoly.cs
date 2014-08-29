@@ -136,7 +136,10 @@ public class PrettyPoly : MonoBehaviour {
 
 	[ContextMenu("Update Mesh")]
 	public void UpdateMesh () {
-		if (meshLayers == null || meshLayers.Length == 0) return;
+		if (meshLayers == null || meshLayers.Length == 0) {
+			mesh.Clear();
+			return;
+		}
 
 		List<PrettyPolyMeshLayer> sortedLayers = new List<PrettyPolyMeshLayer>(meshLayers);
 		sortedLayers.Sort((a,b) => b.posOffset.z.CompareTo(a.posOffset.z));

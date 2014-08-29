@@ -30,8 +30,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 
 	public void UpdateObjects (Transform root, PrettyPolyPoint[] points, bool closed) {
 		if (prefab == null) return;
-		root.DestroyChildren();
-
+		
 		Vector3[] positions = System.Array.ConvertAll(points, p => p.position);
 		if (points.Length < 2) return;
 
@@ -63,6 +62,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		for (int i = 1; i < segments; i++) {
 			AddStrokeSegment(root, points[i-1], points[i%points.Length], pathLength, ref distTraveled, ref index);
 		}
+		root.DestroyChildrenAfter(index);
 	}
 
 	public void AddStrokeSegment (Transform root, Vector3 a, Vector3 b, float pathLength, ref float distTraveled, ref int index) {	
@@ -83,6 +83,27 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			AddObject(root, p, dir, ref index, (distTraveled + dist * frac) / pathLength);
 		}
 		distTraveled += dist;
+	}
+
+	public void AddInnerFill (Transform root, Vector3[] points, float pathLength) {
+		Polygon poly = new Polygon(points);
+		Bounds b = points.GetBounds();
+		Debug.Log(b.min.y);
+		float s = size * 2 * spacing;
+		int index = 0;
+		for (float x = b.min.x; x < b.max.x; x += s) {
+			for (float y = b.min.y; y < b.max.y; y += s) {
+				Vector3 p = new Vector3(x, y, 0);
+				if (poly.Contains(p)) {
+					AddObject(root, p, Vector3.right, ref index, 0);
+				}
+			}
+		}
+		root.DestroyChildrenAfter(index);
+	}
+
+	public void AddOuterFill (Transform root, Vector3[] points, float pathLength) {
+
 	}
 		
 	public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index, float t) {
@@ -110,8 +131,14 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * s + 
 			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * s;
 		
-		GameObject g = GameObject.Instantiate(prefab) as GameObject;
-		g.transform.parent = root;
+		GameObject g;
+		if (index < root.childCount) {
+			g = root.GetChild(index).gameObject;
+		}
+		else {
+			g = GameObject.Instantiate(prefab) as GameObject;
+			g.transform.parent = root;
+		}
 		g.transform.localPosition = p;
 		g.transform.localRotation.SetLookRotation(Vector3.forward, up);
 		g.transform.localScale = Vector3.one * s;
@@ -121,25 +148,6 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		}
 
 		index++;
-	}
-
-	public void AddInnerFill (Transform root, Vector3[] points, float pathLength) {
-		Polygon poly = new Polygon(points);
-		Bounds b = points.GetBounds();
-		float s = size * 2 * spacing;
-		int index = 0;
-		for (float x = b.min.x; x < b.max.x; x += s) {
-			for (float y = b.min.y; y < b.max.y; y += s) {
-				Vector3 p = new Vector3(x, y, 0);
-				if (poly.Contains(p)) {
-					AddObject(root, p, Vector3.right, ref index, 0);
-				}
-			}
-		}
-	}
-
-	public void AddOuterFill (Transform root, Vector3[] points, float pathLength) {
-
 	}
 }
 }
