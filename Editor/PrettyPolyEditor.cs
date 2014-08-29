@@ -33,7 +33,7 @@ public class PrettyPolyEditor : Editor {
 		get { return targets as PrettyPoly[]; }
 	}
 
-	[MenuItem("GameObjects/Create Other/PrettyPoly #&n")]
+	[MenuItem("GameObject/Create Other/PrettyPoly")]
 	static void CreatePrettyPoly () {
 		GameObject go = new GameObject("PrettyPoly");
 		PrettyPoly p = go.AddComponent<PrettyPoly>();
@@ -41,7 +41,6 @@ public class PrettyPolyEditor : Editor {
 			new PrettyPolyPoint(-Vector3.right), 
 			new PrettyPolyPoint(Vector3.right)
 		};
-		p.layers = new PrettyPolyLayer[] {new PrettyPolyLayer()};
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 	}
 
@@ -58,7 +57,17 @@ public class PrettyPolyEditor : Editor {
 			}
 		}
 
+		if (GUILayout.Button("Update Objects")) {
+			if (target != null) prettyPoly.UpdateObjects();
+			else {
+				foreach (PrettyPoly p in prettyPolys) {
+					p.UpdateMesh();
+				}
+			}
+		}
+
 		if (GUI.changed) {
+			prettyPoly.UpdateObjects();
 			prettyPoly.UpdateMesh();
 			EditorUtility.SetDirty(target);
 		}
@@ -100,10 +109,11 @@ public class PrettyPolyEditor : Editor {
 				GUI.SetNextControlName("pretty poly point " + i);
 				if (i == 0) Handles.color = Color.magenta;
 				if (i == 1) Handles.color = Color.green;
+				float size = Mathf.Min(HandleUtility.GetHandleSize(point.position), 0.5f);
 				point.position = Handles.FreeMoveHandle(
 					point.position, 
 					Quaternion.identity, 
-					1, 
+					size, 
 					Vector3.zero, 
 					Handles.CircleCap
 				);
@@ -116,6 +126,7 @@ public class PrettyPolyEditor : Editor {
 			Undo.RecordObject(target, "moved prettyPoly point");
 			prettyPoly.points = points;
 			prettyPoly.UpdateMesh();
+			prettyPoly.UpdateObjects();
 			EditorUtility.SetDirty(target);
 		}
 	}
@@ -130,7 +141,8 @@ public class PrettyPolyEditor : Editor {
 			Handles.color = Color.green;
 			GUI.SetNextControlName("remove pretty poly point " + i);
 			Vector3 mid = (p1 + p2) * 0.5f;
-			if (Handles.Button(mid, Quaternion.identity, 0.5f, 0.5f, Handles.CircleCap)) {
+			float size = Mathf.Min(HandleUtility.GetHandleSize(mid), 0.5f) * 0.5f;
+			if (Handles.Button(mid, Quaternion.identity, size, size, Handles.CircleCap)) {
 				points.Insert(n, new PrettyPolyPoint(mid));
 				Undo.RecordObject(target, "added prettyPoly point");
 				prettyPoly.points = points.ToArray();
@@ -155,8 +167,9 @@ public class PrettyPolyEditor : Editor {
     void RemovePoint () {
     	for (int i = 0; i < prettyPoly.points.Length; i++) {
 			Handles.color = Color.red;
-			GUI.SetNextControlName("remove pretty poly point " + i);
-			if (Handles.Button(prettyPoly.points[i].position, Quaternion.identity, 1, 1, Handles.CircleCap)) {
+   		 	float size = Mathf.Min(HandleUtility.GetHandleSize(prettyPoly.points[i].position), 0.5f);
+   			GUI.SetNextControlName("remove pretty poly point " + i);
+			if (Handles.Button(prettyPoly.points[i].position, Quaternion.identity, size, size, Handles.CircleCap)) {
 				RemovePoint(i);
 				break;
 			}

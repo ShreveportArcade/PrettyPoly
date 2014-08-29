@@ -33,9 +33,10 @@ public class PrettyPoly : MonoBehaviour {
 	public bool addCollider = false;
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
 	[Range(0, 8)] public int subdivisions = 0;
-	public Interpolate.EaseType pathType = Interpolate.EaseType.Linear;
 	
-	[SerializeField, Array] public PrettyPolyLayer[] layers;	
+	[SerializeField, Array] public PrettyPolyMeshLayer[] meshLayers;	
+	[SerializeField, Array] public PrettyPolyObjectLayer[] objectLayers;	
+
 	private Mesh _mesh;
 	public Mesh mesh {
 		get {
@@ -127,17 +128,17 @@ public class PrettyPoly : MonoBehaviour {
 	}
 
 	public void UpdateRenderer () {
-		// if (layers[0].sprite == null) return;
-		// MaterialPropertyBlock props = new MaterialPropertyBlock();
-		// props.AddTexture("_MainTex", layers[0].sprite.texture);
-		// renderer.SetPropertyBlock(props);
+		if (meshLayers[0].sprite == null) return;
+		MaterialPropertyBlock props = new MaterialPropertyBlock();
+		props.AddTexture("_MainTex", meshLayers[0].sprite.texture);
+		renderer.SetPropertyBlock(props);
 	}
 
 	[ContextMenu("Update Mesh")]
 	public void UpdateMesh () {
-		if (layers.Length == 0 || layers[0].sprite == null) return;
+		if (meshLayers == null || meshLayers.Length == 0) return;
 
-		List<PrettyPolyLayer> sortedLayers = new List<PrettyPolyLayer>(layers);
+		List<PrettyPolyMeshLayer> sortedLayers = new List<PrettyPolyMeshLayer>(meshLayers);
 		sortedLayers.Sort((a,b) => b.posOffset.z.CompareTo(a.posOffset.z));
 		
 		mesh.Clear();
@@ -154,7 +155,7 @@ public class PrettyPoly : MonoBehaviour {
 		
 		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
 		float winding = System.Array.ConvertAll(pts, point => point.position).Winding();
-		for (int i = 0; i < layers.Length; i++) {
+		for (int i = 0; i < meshLayers.Length; i++) {
 			Mesh m = sortedLayers[i].GetMesh(pts, closed, winding);
 			if (m == null) continue;
 			tris[sortedLayers[i].materialIndex].AddRange(
@@ -186,11 +187,21 @@ public class PrettyPoly : MonoBehaviour {
 		if (addCollider) AddCollider(pts);
 	}
 
+	[ContextMenu("Update Objects")]
+	public void UpdateObjects () {
+		if (objectLayers == null || objectLayers.Length == 0) return;
+
+		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
+		for (int i = 0; i < objectLayers.Length; i++) {
+			objectLayers[i].UpdateObjects(transform, pts, closed);
+		}
+	}
+
 	void OnCollisionEnter2D (Collision2D collision) {
 		Vector2 norm = -collision.contacts[0].normal;
 
-		for (int i = 0; i < layers.Length; i++) { 
-			PrettyPolyLayer layer = layers[i];
+		for (int i = 0; i < meshLayers.Length; i++) { 
+			PrettyPolyMeshLayer layer = meshLayers[i];
 			if (layer.isTrigger && layer.ExistsInDirection(norm)) {
 				onCollision2D(collision, layer);
 			}

@@ -90,7 +90,6 @@ public class PrettyPolyPainter : EditorWindow {
 		if (prefab == null) {
 			go = new GameObject("PrettyPoly");
 			p = go.AddComponent<PrettyPoly>();		
-			p.layers = new PrettyPolyLayer[] {new PrettyPolyLayer()};
 		}
 		else {
 			go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
