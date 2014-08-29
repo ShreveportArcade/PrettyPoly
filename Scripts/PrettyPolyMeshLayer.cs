@@ -118,24 +118,54 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
 	public void AddLine (Vector3[] points, float pathLength, bool closed) {
 		int segments = points.Length + (closed?1:0);
-		// int index = 0;
+		int index = 0;
 		float distTraveled = 0;
 		for (int i = 1; i < segments+1; i++) {
-			// Vector3 prev = points[i-1];
+			Vector3 prev = points[(i-1+points.Length)%points.Length];
 			Vector3 curr = points[i%points.Length];
 			Vector3 next = points[(i+1)%points.Length];
 
-			float segLen = size * 2 * spacing;
-			float dist = Vector3.Distance(curr, next);
-			if (dist < segLen) return;
-			
-			Vector3 dir = (next - curr).normalized;
-			Vector3 normal = -Vector3.forward;
-			Vector3 outward = Vector3.Cross(dir, normal);
-			if (!ExistsInDirection(outward)) return;
-			
-			distTraveled += dist;
+			AddLineSegment(prev, curr, next, pathLength, ref distTraveled, ref index);
 		}
+	}
+
+	public void AddLineSegment (Vector3 prev, Vector3 curr, Vector3 next, float pathLength, ref float distTraveled, ref int index) {
+		Random.seed = index + seed;
+		if (placementFrequency < Random.value) return;
+
+		distTraveled += Vector3.Distance(curr, next);
+		float t = distTraveled / pathLength;
+		Vector3 dir = (next - curr).normalized;
+		Vector3 normal = -Vector3.forward;
+		Vector3 outward = Vector3.Cross(dir, normal);
+		if (!ExistsInDirection(outward)) return;
+
+		Vector3 right = Vector3.Cross(dir, normal);
+		Vector3 up = Vector3.Cross(normal, right);
+
+		float s = GetSize(t);
+		
+		up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
+		verts.AddRange(new Vector3[] {
+			curr + up * s,
+			next + up * s,
+			next,
+			curr
+		});
+		
+		uvs.AddRange(GetSpriteUVs());
+		
+		Color c = GetShiftedColor(color, t);
+		colors.AddRange(new Color[] {c, c, c, c});
+
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
+
+		Vector4 tan = (Vector4)right;
+		tan.w = 1;
+		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
+
+		tris.AddRange(new int[] {index+3, index+2, index, index+2, index+1, index});
+		index += 4;
 	}
 
 	public void AddStroke (Vector3[] points, float pathLength, bool closed) {
@@ -170,27 +200,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	public void AddStrokeQuad (Vector3 position, Vector3 dir, ref int index, float t) {
 		if (placementFrequency < Random.value) return;
 
-		Vector3 normal = -Vector3.forward;
-
 		Random.seed = index + seed;
 
-		float a = angle;
-		a += angleOffsets.Evaluate(t);
-		if (alternateAngles && (index % 2) == 1) a = 180 - a;
-		if (!followPath) {
-			if (Vector3.Dot(Vector3.up, normal) > 0) dir = Vector3.Cross(-Vector3.up, normal).normalized;
-			else dir = Vector3.Cross(Vector3.right, normal).normalized;
-		}
+		dir = GetDirection(dir, index, t);
+		Vector3 right = Vector3.Cross(dir, -Vector3.forward);
+		Vector3 up = Vector3.Cross(-Vector3.forward, right);
 
-		dir = Quaternion.AngleAxis(a + Random.Range(-angleVariation, angleVariation), normal) * dir;
-		Vector3 right = Vector3.Cross(dir, normal);
-		Vector3 up = Vector3.Cross(normal, right);
-
-		float s = size * (1 - Random.Range(-sizeVariation, sizeVariation)) + sizeOffsets.Evaluate(t);
-		if (s < 0.001f && s > -0.001f) s = 0.001f * Mathf.Sign(s);
-		Vector3 p = position + posOffset +
-			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * s + 
-			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * s;
+		float s = GetSize(t);
+		Vector3 p = GetPosition(position, right, up, s);
 
 		up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
 		verts.AddRange(new Vector3[] {

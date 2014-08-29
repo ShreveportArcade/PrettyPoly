@@ -107,5 +107,30 @@ public class PrettyPolyLayer {
 		float dev = -Vector3.Dot(dir, naturalDirection);
 		return (dev <= 1 - angularPlacementRange * 2);
 	}
+
+	public float GetSize (float t) {
+		float s = size * (1 - Random.Range(-sizeVariation, sizeVariation)) + sizeOffsets.Evaluate(t);
+		if (s < 0.001f && s > -0.001f) s = 0.001f * Mathf.Sign(s);
+		return s;
+	}
+
+	public Vector3 GetPosition (Vector3 position, Vector3 right, Vector3 up, float size) {
+		return position + posOffset +
+			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * size + 
+			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * size;
+	}
+
+	public Vector3 GetDirection (Vector3 dir, int index, float t) {
+		Vector3 normal = -Vector3.forward;
+		float a = angle;
+		a += angleOffsets.Evaluate(t);
+		if (alternateAngles && (index % 2) == 1) a = 180 - a;
+		if (!followPath) {
+			if (Vector3.Dot(Vector3.up, normal) > 0) dir = Vector3.Cross(-Vector3.up, normal).normalized;
+			else dir = Vector3.Cross(Vector3.right, normal).normalized;
+		}
+
+		return Quaternion.AngleAxis(a + Random.Range(-angleVariation, angleVariation), normal) * dir;
+	}
 }
 }

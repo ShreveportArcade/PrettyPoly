@@ -88,7 +88,6 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	public void AddInnerFill (Transform root, Vector3[] points, float pathLength) {
 		Polygon poly = new Polygon(points);
 		Bounds b = points.GetBounds();
-		Debug.Log(b.min.y);
 		float s = size * 2 * spacing;
 		int index = 0;
 		for (float x = b.min.x; x < b.max.x; x += s) {
@@ -109,27 +108,14 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index, float t) {
 		if (placementFrequency < Random.value) return;
 
-		Vector3 normal = -Vector3.forward;
-
 		Random.seed = index + seed;
 
-		float a = angle;
-		a += angleOffsets.Evaluate(t);
-		if (alternateAngles && (index % 2) == 1) a = 180 - a;
-		if (!followPath) {
-			if (Vector3.Dot(Vector3.up, normal) > 0) dir = Vector3.Cross(-Vector3.up, normal).normalized;
-			else dir = Vector3.Cross(Vector3.right, normal).normalized;
-		}
+		dir = GetDirection(dir, index, t);
+		Vector3 right = Vector3.Cross(dir, -Vector3.forward);
+		Vector3 up = Vector3.Cross(-Vector3.forward, right);
 
-		dir = Quaternion.AngleAxis(a + Random.Range(-angleVariation, angleVariation), normal) * dir;
-		Vector3 right = Vector3.Cross(dir, normal);
-		Vector3 up = Vector3.Cross(normal, right);
-
-		float s = size * (1 - Random.Range(-sizeVariation, sizeVariation)) + sizeOffsets.Evaluate(t);
-		if (s < 0.001f && s > -0.001f) s = 0.001f * Mathf.Sign(s);
-		Vector3 p = position + posOffset +
-			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * s + 
-			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * s;
+		float s = GetSize(t);
+		Vector3 p = GetPosition(position, right, up, s);
 		
 		GameObject g;
 		if (index < root.childCount) {
@@ -140,7 +126,8 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			g.transform.parent = root;
 		}
 		g.transform.localPosition = p;
-		g.transform.localRotation.SetLookRotation(Vector3.forward, up);
+		g.transform.localRotation = Quaternion.AngleAxis(
+			Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg, Vector3.forward);
 		g.transform.localScale = Vector3.one * s;
 		SpriteRenderer spriteRenderer = g.GetComponent<SpriteRenderer>();
 		if (spriteRenderer) {
