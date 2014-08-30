@@ -30,6 +30,7 @@ public class PrettyPoly : MonoBehaviour {
 	public static event OnCollision2DCallback onCollision2D = delegate{};
 
 	public bool closed = false;
+	public bool solid = true;
 	public bool addCollider = false;
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
 	[Range(0, 8)] public int subdivisions = 0;
@@ -115,7 +116,7 @@ public class PrettyPoly : MonoBehaviour {
 	}
 
 	public void AddCollider (PrettyPolyPoint[] pts) {
-		if (closed) {
+		if (closed && solid) {
 			gameObject.DestroyComponent<EdgeCollider2D>();
 			PolygonCollider2D c = gameObject.GetOrAddComponent<PolygonCollider2D>();
 			c.SetPath(0, System.Array.ConvertAll(pts, point => (Vector2)point.position));
@@ -124,6 +125,11 @@ public class PrettyPoly : MonoBehaviour {
 			gameObject.DestroyComponent<PolygonCollider2D>();
 			EdgeCollider2D c = gameObject.GetOrAddComponent<EdgeCollider2D>();
 			c.points = System.Array.ConvertAll(pts, point => (Vector2)point.position);
+			if (closed) {
+				List<Vector2> closedPts = new List<Vector2>(c.points);
+				closedPts.Add(closedPts[0]);
+				c.points = closedPts.ToArray();
+			}
 		}
 	}
 
