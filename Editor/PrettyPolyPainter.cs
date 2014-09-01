@@ -109,6 +109,7 @@ public class PrettyPolyPainter : EditorWindow {
 		points = points.MoveBy(-center);
 		p.points = System.Array.ConvertAll(points, point => new PrettyPolyPoint(point));
 		p.UpdateMesh();
+		p.UpdateObjects();
 
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 		currentPoints.Clear();

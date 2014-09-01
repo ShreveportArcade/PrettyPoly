@@ -133,13 +133,6 @@ public class PrettyPoly : MonoBehaviour {
 		}
 	}
 
-	public void UpdateRenderer () {
-		if (meshLayers[0].sprite == null) return;
-		MaterialPropertyBlock props = new MaterialPropertyBlock();
-		props.AddTexture("_MainTex", meshLayers[0].sprite.texture);
-		renderer.SetPropertyBlock(props);
-	}
-
 	[ContextMenu("Update Mesh")]
 	public void UpdateMesh () {
 		if (meshLayers == null || meshLayers.Length == 0) {
@@ -190,8 +183,6 @@ public class PrettyPoly : MonoBehaviour {
 
 		if (Application.isPlaying) GetComponent<MeshFilter>().mesh = mesh;
 		else GetComponent<MeshFilter>().sharedMesh = mesh;
-
-		UpdateRenderer();
 
 		if (addCollider) AddCollider(pts);
 	}

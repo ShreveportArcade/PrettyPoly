@@ -147,6 +147,7 @@ public class PrettyPolyEditor : Editor {
 				Undo.RecordObject(target, "added prettyPoly point");
 				prettyPoly.points = points.ToArray();
 				prettyPoly.UpdateMesh();
+				prettyPoly.UpdateObjects();
 				EditorUtility.SetDirty(target);
 				break;
 			}
@@ -161,6 +162,7 @@ public class PrettyPolyEditor : Editor {
         points.RemoveAt(index);
         prettyPoly.points = points.ToArray();
 		prettyPoly.UpdateMesh();
+		prettyPoly.UpdateObjects();
 		EditorUtility.SetDirty(target);
     }
 

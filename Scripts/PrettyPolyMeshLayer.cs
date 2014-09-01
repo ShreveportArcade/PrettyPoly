@@ -29,6 +29,15 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	public Sprite sprite;
 	public int materialIndex = 0;
 
+	public enum JoinType {
+		None,
+		Mitre,
+		Bevel,
+		Rounded
+	}
+
+	public JoinType joinType = JoinType.None;
+
 	public bool isTrigger = false;
 
 	protected List<Vector3> verts = new List<Vector3>();
@@ -117,50 +126,86 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddLine (Vector3[] points, float pathLength, bool closed) {
+		if (sprite == null) return;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
+		bool prevExists = closed;
+		Vector3 prev = points[points.Length-1];
+		Vector3 curr = points[0];
+		Vector3 prevOut = Vector3.Cross((curr - prev).normalized, -Vector3.forward);
 		for (int i = 1; i < segments+1; i++) {
-			Vector3 prev = points[(i-1+points.Length)%points.Length];
-			Vector3 curr = points[i%points.Length];
+			prev = curr;
+			curr = points[i%points.Length];
 			Vector3 next = points[(i+1)%points.Length];
+			Random.seed = index + seed;
 
-			AddLineSegment(prev, curr, next, pathLength, ref distTraveled, ref index);
+			Vector3 outward = Vector3.Cross((next - curr).normalized, -Vector3.forward);
+			float cavity = Vector3.Cross(prevOut, outward).z;
+			distTraveled += Vector3.Distance(curr, next);
+			float t = distTraveled / pathLength;
+			float size = GetSize(t);
+			Color c = GetShiftedColor(color, t);
+			if (joinType != JoinType.None && prevExists && cavity != 0) {
+				if (cavity < 0) {
+					switch (joinType) {
+						case JoinType.Mitre:
+							AddMitre(curr, outward, prevOut, size, c, ref index);
+							break;
+						case JoinType.Bevel:
+							break;
+						case JoinType.Rounded:
+							break;
+					}
+				}
+			}
+
+			prevOut = outward;
+			if (placementFrequency > Random.value && ExistsInDirection(outward)) {
+				prevExists = true;
+				AddLineSegment(curr, next, outward, size, c, ref index);
+			}
+			else {
+				prevExists = false;
+			}
 		}
 	}
 
-	public void AddLineSegment (Vector3 prev, Vector3 curr, Vector3 next, float pathLength, ref float distTraveled, ref int index) {
-		Random.seed = index + seed;
-		if (placementFrequency < Random.value) return;
-
-		distTraveled += Vector3.Distance(curr, next);
-		float t = distTraveled / pathLength;
-		Vector3 dir = (next - curr).normalized;
-		Vector3 normal = -Vector3.forward;
-		Vector3 outward = Vector3.Cross(dir, normal);
-		if (!ExistsInDirection(outward)) return;
-
-		Vector3 right = Vector3.Cross(dir, normal);
-		Vector3 up = Vector3.Cross(normal, right);
-
-		float s = GetSize(t);
-		
-		up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
+	public void AddMitre (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, ref int index) {
 		verts.AddRange(new Vector3[] {
-			curr + up * s,
-			next + up * s,
+			pos + prevOut * size,
+			pos + outward * size,
+			pos
+		});
+
+		Vector2[] quadUVs = GetSpriteUVs();
+		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], (quadUVs[2] + quadUVs[3]) * 0.5f});
+
+		colors.AddRange(new Color[] {c, c, c});
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward});
+
+		Vector4 tan = (Vector4)outward;
+		tan.w = 1;
+		tans.AddRange(new Vector4[] {tan, tan, tan});
+
+		tris.AddRange(new int[] {index, index+1, index+2});
+		index += 3;
+	}
+
+	public void AddLineSegment (Vector3 curr, Vector3 next, Vector3 outward, float size, Color c, ref int index) {
+		outward *= size;
+		verts.AddRange(new Vector3[] {
+			curr + outward,
+			next + outward,
 			next,
 			curr
 		});
 		
 		uvs.AddRange(GetSpriteUVs());
-		
-		Color c = GetShiftedColor(color, t);
 		colors.AddRange(new Color[] {c, c, c, c});
-
 		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
 
-		Vector4 tan = (Vector4)right;
+		Vector4 tan = (Vector4)outward;
 		tan.w = 1;
 		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
 
