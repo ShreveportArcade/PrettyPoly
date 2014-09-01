@@ -31,7 +31,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
 	public enum JoinType {
 		None,
-		Mitre,
+		Miter,
 		Bevel,
 		Rounded
 	}
@@ -149,10 +149,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			if (joinType != JoinType.None && prevExists && cavity != 0) {
 				if (cavity < 0) {
 					switch (joinType) {
-						case JoinType.Mitre:
-							AddMitre(curr, outward, prevOut, size, c, ref index);
+						case JoinType.Miter:
+							AddMiter(curr, outward, prevOut, size, c, ref index);
 							break;
 						case JoinType.Bevel:
+							Line2D lineA = new Line2D(prevOut, prevOut + (curr - prev).normalized);
+							Line2D lineB = new Line2D(outward, outward + (next - curr).normalized);
+							Vector3 bevelOut = (Vector3)lineA.Intersect(lineB);
+							AddBevel(curr, outward, prevOut, bevelOut, size, c, ref index);
 							break;
 						case JoinType.Rounded:
 							break;
@@ -171,7 +175,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		}
 	}
 
-	public void AddMitre (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, ref int index) {
+	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, ref int index) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + outward * size,
@@ -190,6 +194,28 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
 		tris.AddRange(new int[] {index, index+1, index+2});
 		index += 3;
+	}
+
+	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, ref int index) {
+		verts.AddRange(new Vector3[] {
+			pos + prevOut * size,
+			pos + bevelOut * size,
+			pos + outward * size,
+			pos
+		});
+
+		Vector2[] quadUVs = GetSpriteUVs();
+		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[0], quadUVs[3]});
+
+		colors.AddRange(new Color[] {c, c, c, c});
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
+
+		Vector4 tan = (Vector4)outward;
+		tan.w = 1;
+		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
+
+		tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
+		index += 4;
 	}
 
 	public void AddLineSegment (Vector3 curr, Vector3 next, Vector3 outward, float size, Color c, ref int index) {
