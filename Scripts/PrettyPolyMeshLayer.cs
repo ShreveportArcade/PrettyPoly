@@ -130,10 +130,10 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
-		bool prevExists = closed;
 		Vector3 prev = points[points.Length-1];
 		Vector3 curr = points[0];
 		Vector3 prevOut = Vector3.Cross((curr - prev).normalized, -Vector3.forward);
+		bool prevExists = ExistsInDirection(prevOut);
 		for (int i = 1; i < segments+1; i++) {
 			prev = curr;
 			curr = points[i%points.Length];
@@ -141,12 +141,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			Random.seed = index + seed;
 
 			Vector3 outward = Vector3.Cross((next - curr).normalized, -Vector3.forward);
+			bool existsOut = ExistsInDirection(outward);
+
 			float cavity = Vector3.Cross(prevOut, outward).z;
 			distTraveled += Vector3.Distance(curr, next);
 			float t = distTraveled / pathLength;
 			float size = GetSize(t);
 			Color c = GetShiftedColor(color, t);
-			if (joinType != JoinType.None && prevExists && cavity != 0) {
+			if (prevExists && existsOut && cavity != 0) {
 				if (cavity < 0) {
 					switch (joinType) {
 						case JoinType.Miter:
@@ -165,13 +167,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			}
 
 			prevOut = outward;
-			if (placementFrequency > Random.value && ExistsInDirection(outward)) {
-				prevExists = true;
-				AddLineSegment(curr, next, outward, size, c, ref index);
-			}
-			else {
-				prevExists = false;
-			}
+			prevExists = existsOut;
+			if (existsOut) AddLineSegment(curr, next, outward, size, c, ref index);
 		}
 	}
 
