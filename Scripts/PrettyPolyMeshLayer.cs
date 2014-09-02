@@ -94,7 +94,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Clear();
 
 		float pathLength = positions.PathLength(closed);
-		
+		if (winding < 0) positions = positions.Reverse();
+				
 		switch (layerType) {
 			case (LayerType.Stroke):
 				if (sprite == null) return null;
@@ -107,7 +108,6 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				// AddCap(positions);
 				break;
 			case (LayerType.InnerFill):
-				if (winding > 0) positions = positions.Reverse();
 				AddInnerFill(positions, pathLength);
 				break;
 			case (LayerType.OuterFill):
@@ -215,13 +215,13 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 4;
 	}
 
-	public void AddLineSegment (Vector3 curr, Vector3 next, Vector3 outward, float size, Color c, ref int index) {
+	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index) {
 		outward *= size;
 		verts.AddRange(new Vector3[] {
-			curr + outward,
-			next + outward,
-			next,
-			curr
+			a + outward,
+			b + outward,
+			b,
+			a
 		});
 		
 		uvs.AddRange(GetSpriteUVs());
@@ -232,7 +232,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		tan.w = 1;
 		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
 
-		tris.AddRange(new int[] {index+3, index+2, index, index+2, index+1, index});
+		tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
 		index += 4;
 	}
 
