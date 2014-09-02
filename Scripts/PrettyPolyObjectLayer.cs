@@ -122,7 +122,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			g = root.GetChild(index).gameObject;
 		}
 		else {
-			g = GameObject.Instantiate(prefab) as GameObject;
+			g = prefab.Instantiate() as GameObject;
 			g.transform.parent = root;
 		}
 		g.transform.localPosition = p;

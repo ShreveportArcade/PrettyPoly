@@ -21,6 +21,7 @@ using UnityEditor;
 using System.Collections.Generic;
 
 namespace PrettyPoly {
+[InitializeOnLoad]
 [CanEditMultipleObjects]
 [CustomEditor(typeof(PrettyPoly))]
 public class PrettyPolyEditor : Editor {
@@ -32,6 +33,26 @@ public class PrettyPolyEditor : Editor {
 	PrettyPoly[] prettyPolys {
 		get { return targets as PrettyPoly[]; }
 	}
+
+	public static PrettyPoly selectedPoly;
+
+	static PrettyPolyEditor () {
+        EditorApplication.update += Update;
+    }
+
+    static void Update () {
+        Transform selection = Selection.activeTransform;
+        if (selection == null) {
+        	selectedPoly = null;
+        	return;
+        } 
+
+        PrettyPoly prettyPoly = selection.parent.gameObject.GetComponent<PrettyPoly>();
+        if (prettyPoly != null && selectedPoly != prettyPoly) {
+        	Selection.activeGameObject = prettyPoly.gameObject;
+        	selectedPoly = prettyPoly;
+        }
+    }
 
 	[MenuItem("GameObject/Create Other/PrettyPoly")]
 	static void CreatePrettyPoly () {
