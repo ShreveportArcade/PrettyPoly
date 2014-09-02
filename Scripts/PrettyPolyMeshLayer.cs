@@ -36,7 +36,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Rounded
 	}
 
-	public JoinType joinType = JoinType.None;
+	public JoinType outerJoinType = JoinType.None;
+	public JoinType innerJoinType = JoinType.None;
 
 	public bool isTrigger = false;
 
@@ -111,7 +112,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				AddInnerFill(positions, pathLength);
 				break;
 			case (LayerType.OuterFill):
-				AddOuterFill(positions, pathLength);
+				// AddOuterFill(positions, pathLength);
 				break;
 		}
 
@@ -130,55 +131,102 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
+		
 		Vector3 prev = points[points.Length-1];
 		Vector3 curr = points[0];
+		Vector3 next = points[1];
+		Vector3 future = points[2%points.Length];
+		
 		Vector3 prevOut = Vector3.Cross((prev - curr).normalized, -Vector3.forward);
-		bool prevExists = ExistsInDirection(prevOut);
+		Vector3 currOut = Vector3.Cross((next - curr).normalized, -Vector3.forward);
+		Vector3 nextOut = Vector3.Cross((future - next).normalized, -Vector3.forward);
+		
+		bool prevOutExists = ExistsInDirection(prevOut);
+		bool currOutExists = ExistsInDirection(currOut);
+		bool nextOutExists = ExistsInDirection(nextOut);
+		
+		float currCavity = Vector3.Cross(prevOut, currOut).z;
+		float nextCavity = Vector3.Cross(currOut, nextOut).z;
+		
 		for (int i = 1; i < segments+1; i++) {
-			prev = curr;
-			curr = points[i%points.Length];
-			Vector3 next = points[(i+1)%points.Length];
 			Random.seed = index + seed;
+			
+			prev = curr;
+			curr = next;
+			next = future;
+			future = points[(i+2)%points.Length];
+			
+			prevOut = currOut;
+			currOut = nextOut;
+			nextOut = Vector3.Cross((future - next).normalized, -Vector3.forward);
 
-			Vector3 outward = Vector3.Cross((next - curr).normalized, -Vector3.forward);
-			bool existsOut = ExistsInDirection(outward);
+			prevOutExists = currOutExists;
+			currOutExists = nextOutExists;
+			nextOutExists = ExistsInDirection(nextOut);
 
-			float cavity = Vector3.Cross(prevOut, outward).z;
+			currCavity = nextCavity;
+			nextCavity = Vector3.Cross(currOut, nextOut).z;
+
 			distTraveled += Vector3.Distance(curr, next);
 			float t = distTraveled / pathLength;
 			float size = GetSize(t);
 			Color c = GetShiftedColor(color, t);
-			if (prevExists && existsOut && Mathf.Abs(cavity) > 0.0001f) {
-				if (cavity < 0) {
-					switch (joinType) {
+
+			if (currOutExists) {
+				Vector3 a = curr;
+				Vector3 b = next;
+				Line2D lineA = new Line2D(prevOut, prevOut + (curr - prev).normalized);
+				Line2D lineB = new Line2D(currOut, currOut + (next - curr).normalized);
+				Line2D lineC = new Line2D(nextOut, nextOut + (future - next).normalized);
+				Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
+				Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
+				
+				if (prevOutExists && currCavity < 0) {
+					switch (outerJoinType) {
 						case JoinType.Miter:
-							AddMiter(curr, outward, prevOut, size, c, ref index);
+							AddMiter(curr, currOut, prevOut, size, c, false, ref index);
 							break;
 						case JoinType.Bevel:
-							Line2D lineA = new Line2D(prevOut, prevOut + (curr - prev).normalized);
-							Line2D lineB = new Line2D(outward, outward + (next - curr).normalized);
-							Vector3 bevelOut = (Vector3)lineA.Intersect(lineB);
-							AddBevel(curr, outward, prevOut, bevelOut, size, c, ref index);
+							AddBevel(curr, currOut, prevOut, abIntersect, size, c, false, ref index);
 							break;
 						case JoinType.Rounded:
-							float rot = Vector3.Angle(prevOut, outward);
-							AddRound(curr, outward, prevOut, rot, size, c, ref index);
+							float rot = Vector3.Angle(prevOut, currOut);
+							AddRound(curr, currOut, prevOut, rot, size, c, false, ref index);
 							break;
 					}
 				}
-			}
+				if (prevOutExists && currCavity > 0) {
+					a = curr + (abIntersect - currOut) * size;
+					Vector3 pivot = curr + abIntersect * size;
+					switch (innerJoinType) {
+						case JoinType.Miter:
+							AddMiter(pivot, -currOut, -prevOut, size, c, true, ref index);
+							break;
+						case JoinType.Bevel:
+							AddBevel(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index);
+							break;
+						case JoinType.Rounded:
+							float rot = Vector3.Angle(prevOut, currOut);
+							AddRound(pivot, -currOut, -prevOut, -rot, size, c, true, ref index);
+							break;
+					}
+				}
 
-			prevOut = outward;
-			prevExists = existsOut;
-			if (existsOut) AddLineSegment(curr, next, outward, size, c, ref index);
+				if (nextOutExists && nextCavity > 0) {
+					b = next + (bcIntersect - currOut) * size;
+				}
+				
+				AddLineSegment(a, b, currOut, size, c, ref index);
+			}
 		}
 	}
 
-	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, ref int index) {
+	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index) {
 		int segments = Mathf.CeilToInt(Mathf.Abs(rotation));
 		if (segments == 0) return;
 		
 		Vector2[] quadUVs = GetSpriteUVs();
+		if (flipUVs) quadUVs.Reverse();
 		Vector4 tan = (Vector4)prevOut;
 		tan.w = 1;
 		tans.AddRange(new Vector4[] {tan, tan});
@@ -214,7 +262,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += segments + 2;
 	}
 
-	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, ref int index) {
+	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + outward * size,
@@ -222,6 +270,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		});
 
 		Vector2[] quadUVs = GetSpriteUVs();
+		if (flipUVs) quadUVs.Reverse();
 		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], (quadUVs[2] + quadUVs[3]) * 0.5f});
 
 		colors.AddRange(new Color[] {c, c, c});
@@ -235,7 +284,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 3;
 	}
 
-	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, ref int index) {
+	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + bevelOut * size,
@@ -244,6 +293,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		});
 
 		Vector2[] quadUVs = GetSpriteUVs();
+		if (flipUVs) quadUVs.Reverse();
 		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[0], quadUVs[3]});
 
 		colors.AddRange(new Color[] {c, c, c, c});
