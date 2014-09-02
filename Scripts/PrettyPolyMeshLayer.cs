@@ -126,13 +126,13 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddLine (Vector3[] points, float pathLength, bool closed) {
-		if (sprite == null) return;
+		if (sprite == null || points.Length < 2) return;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
 		Vector3 prev = points[points.Length-1];
 		Vector3 curr = points[0];
-		Vector3 prevOut = Vector3.Cross((curr - prev).normalized, -Vector3.forward);
+		Vector3 prevOut = Vector3.Cross((prev - curr).normalized, -Vector3.forward);
 		bool prevExists = ExistsInDirection(prevOut);
 		for (int i = 1; i < segments+1; i++) {
 			prev = curr;
@@ -175,6 +175,9 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddRound (Vector3 pos, Vector3 outward, float rotation, float size, Color c, ref int index) {
+		int segments = (int)rotation;
+		if (segments == 0) return;
+		
 		Vector2[] quadUVs = GetSpriteUVs();
 		Vector4 tan = (Vector4)outward;
 		tan.w = 1;
@@ -184,7 +187,6 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		verts.AddRange(new Vector3[] {pos, pos + outward});
 		uvs.AddRange(new Vector2[] {(quadUVs[2] + quadUVs[3]) * 0.5f, quadUVs[0]});
 
-		int segments = (int)rotation;
 		Quaternion rot = Quaternion.AngleAxis(rotation / (float)segments, -Vector3.forward);
 		outward = rot * outward;
 		for (int i = 1; i < segments; i++) {
