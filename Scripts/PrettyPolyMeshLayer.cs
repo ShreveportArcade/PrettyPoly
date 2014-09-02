@@ -148,7 +148,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			float t = distTraveled / pathLength;
 			float size = GetSize(t);
 			Color c = GetShiftedColor(color, t);
-			if (prevExists && existsOut && cavity != 0) {
+			if (prevExists && existsOut && Mathf.Abs(cavity) > 0.01f) {
 				if (cavity < 0) {
 					switch (joinType) {
 						case JoinType.Miter:
@@ -161,6 +161,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 							AddBevel(curr, outward, prevOut, bevelOut, size, c, ref index);
 							break;
 						case JoinType.Rounded:
+							float rot = Vector3.Angle(prevOut, outward);
+							AddRound(curr, prevOut, rot, size, c, ref index);
 							break;
 					}
 				}
@@ -170,6 +172,35 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			prevExists = existsOut;
 			if (existsOut) AddLineSegment(curr, next, outward, size, c, ref index);
 		}
+	}
+
+	public void AddRound (Vector3 pos, Vector3 outward, float rotation, float size, Color c, ref int index) {
+		Vector2[] quadUVs = GetSpriteUVs();
+		Vector4 tan = (Vector4)outward;
+		tan.w = 1;
+		tans.AddRange(new Vector4[] {tan, tan});
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward});
+		colors.AddRange(new Color[] {c, c});
+		verts.AddRange(new Vector3[] {pos, pos + outward});
+		uvs.AddRange(new Vector2[] {(quadUVs[2] + quadUVs[3]) * 0.5f, quadUVs[0]});
+
+		int segments = (int)rotation;
+		Quaternion rot = Quaternion.AngleAxis(rotation / (float)segments, -Vector3.forward);
+		outward = rot * outward;
+		for (int i = 1; i < segments; i++) {
+			float frac = (float)i / (float)segments;
+			outward = rot * outward;
+			verts.Add(pos + outward);
+			uvs.Add(Vector2.Lerp(quadUVs[0], quadUVs[1], frac));
+			colors.Add(c);
+			norms.Add(-Vector3.forward);
+			tan = (Vector4)outward;
+			tan.w = 1;
+			tans.Add(tan);
+			tris.AddRange(new int[] {index+i, index+i+1, index});
+		}
+
+		index += segments + 1;
 	}
 
 	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, ref int index) {
