@@ -42,7 +42,7 @@ public class PrettyPolyEditor : Editor {
 
     static void Update () {
         Transform selection = Selection.activeTransform;
-        if (selection == null) {
+        if (selection == null || selection.parent == null) {
         	selectedPoly = null;
         	return;
         } 

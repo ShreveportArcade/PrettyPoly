@@ -125,6 +125,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			g = prefab.Instantiate() as GameObject;
 			g.transform.parent = root;
 		}
+		g.SetStatic(g.transform.parent.gameObject.GetStatic());
 		g.transform.localPosition = p;
 		g.transform.localRotation = Quaternion.AngleAxis(
 			Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg, Vector3.forward);
