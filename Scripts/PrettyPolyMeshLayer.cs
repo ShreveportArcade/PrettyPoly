@@ -69,6 +69,15 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public Vector2[] GetSpriteUVs () {
+		if (sprite == null) {
+			return new Vector2[] {
+				Vector2.up,
+				Vector2.one,
+				Vector2.right,
+				Vector2.zero
+			};
+		}
+
 		Rect rect = new Rect(
 			sprite.textureRect.x / (float)sprite.texture.width,
 			sprite.textureRect.y / (float)sprite.texture.height,
@@ -99,7 +108,6 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				
 		switch (layerType) {
 			case (LayerType.Stroke):
-				if (sprite == null) return null;
 				AddStroke(positions, pathLength, closed);
 				break;
 			case (LayerType.Line):
@@ -127,7 +135,6 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddLine (Vector3[] points, float pathLength, bool closed) {
-		if (sprite == null || points.Length < 2) return;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
@@ -369,7 +376,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		float s = GetSize(t);
 		Vector3 p = GetPosition(position, right, up, s);
 
-		up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
+		if (sprite != null) up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
 		verts.AddRange(new Vector3[] {
 			p + (up - right) * s,
 			p + (up + right) * s,

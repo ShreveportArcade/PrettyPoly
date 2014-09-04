@@ -26,6 +26,8 @@ namespace PrettyPoly {
 [CustomEditor(typeof(PrettyPoly))]
 public class PrettyPolyEditor : Editor {
 
+	const float handleScale = 0.3f;
+
 	PrettyPoly prettyPoly {
 		get { return target as PrettyPoly; }
 	}
@@ -35,6 +37,8 @@ public class PrettyPolyEditor : Editor {
 	}
 
 	public static PrettyPoly selectedPoly;
+	public static PrettyPolyPoint selectedPoint;
+	public static int lastHotControl = 0;
 
 	static PrettyPolyEditor () {
         EditorApplication.update += Update;
@@ -117,12 +121,12 @@ public class PrettyPolyEditor : Editor {
 		EditorGUI.BeginChangeCheck();
 		PrettyPolyPoint[] points = new PrettyPolyPoint[prettyPoly.points.Length];
 
-		if (e.command || e.control) {
+		if (e.alt) {
 			RemovePoint();
 			points = prettyPoly.points;
 		}
 		else {
-			AddPoint();
+			if (e.shift) AddPoint();
 			for (int i = 0; i < points.Length; i++) {
 				PrettyPolyPoint point = new PrettyPolyPoint(prettyPoly.points[i]);
 				
@@ -130,7 +134,7 @@ public class PrettyPolyEditor : Editor {
 				GUI.SetNextControlName("pretty poly point " + i);
 				if (i == 0) Handles.color = Color.magenta;
 				if (i == 1) Handles.color = Color.green;
-				float size = Mathf.Min(HandleUtility.GetHandleSize(point.position), 0.5f);
+				float size =GetHandleSize(point.position, 1);
 				point.position = Handles.FreeMoveHandle(
 					point.position, 
 					Quaternion.identity, 
@@ -139,6 +143,12 @@ public class PrettyPolyEditor : Editor {
 					Handles.CircleCap
 				);
 				point.position.z = 0;
+
+				if (prettyPoly.curveType == PrettyPoly.CurveType.CubicBezier) {
+					point.inTangent = TangentHandle(point.position, point.inTangent);
+					point.outTangent = TangentHandle(point.position, point.outTangent);
+				}
+
 				points[i] = point;
 			}
 		}
@@ -162,9 +172,11 @@ public class PrettyPolyEditor : Editor {
 			Handles.color = Color.green;
 			GUI.SetNextControlName("remove pretty poly point " + i);
 			Vector3 mid = (p1 + p2) * 0.5f;
-			float size = Mathf.Min(HandleUtility.GetHandleSize(mid), 0.5f) * 0.5f;
+			float size = GetHandleSize(mid, 0.5f);
 			if (Handles.Button(mid, Quaternion.identity, size, size, Handles.CircleCap)) {
-				points.Insert(n, new PrettyPolyPoint(mid));
+				Vector3 inT = (p1 - mid).normalized;
+				Vector3 outT = (p2 - mid).normalized;
+				points.Insert(n, new PrettyPolyPoint(mid, inT, outT));
 				Undo.RecordObject(target, "added prettyPoly point");
 				prettyPoly.points = points.ToArray();
 				prettyPoly.UpdateMesh();
@@ -190,13 +202,30 @@ public class PrettyPolyEditor : Editor {
     void RemovePoint () {
     	for (int i = 0; i < prettyPoly.points.Length; i++) {
 			Handles.color = Color.red;
-   		 	float size = Mathf.Min(HandleUtility.GetHandleSize(prettyPoly.points[i].position), 0.5f);
+   		 	float size = GetHandleSize(prettyPoly.points[i].position, 1);
    			GUI.SetNextControlName("remove pretty poly point " + i);
 			if (Handles.Button(prettyPoly.points[i].position, Quaternion.identity, size, size, Handles.CircleCap)) {
 				RemovePoint(i);
 				break;
 			}
 		}
+    }
+
+    Vector3 TangentHandle (Vector3 point, Vector3 tangent) {
+    	Handles.DrawLine(point, point + tangent);
+    	Vector3 p = Handles.FreeMoveHandle(
+			point + tangent, 
+			Quaternion.identity, 
+			GetHandleSize(point, 0.3f), 
+			Vector3.zero, 
+			Handles.CircleCap
+		) - point;
+		p.z = 0;
+    	return p;
+    }
+
+    float GetHandleSize (Vector3 pos, float size) {
+    	return Mathf.Min(HandleUtility.GetHandleSize(pos), 0.5f) * size * handleScale;
     }
 }
 }

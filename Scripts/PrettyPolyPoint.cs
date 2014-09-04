@@ -24,7 +24,7 @@ namespace PrettyPoly {
 public class PrettyPolyPoint {
 
 	public Vector3 position = Vector3.zero;
-	public Vector3 inTangent = Vector3.right;
+	public Vector3 inTangent = -Vector3.right;
 	public Vector3 outTangent = Vector3.right;
 	public Color color = Color.white;
 	public float size = 1;
@@ -39,24 +39,24 @@ public class PrettyPolyPoint {
 
 	public PrettyPolyPoint (Vector3 position) {
 		this.position = position;
-		this.inTangent = Vector3.right;
+		this.inTangent = -Vector3.right;
 		this.outTangent = Vector3.right;
 		this.color = Color.white;
 		this.size = 1;
 	}
 
-	public PrettyPolyPoint (Vector3 position, Vector3 tangent) {
+	public PrettyPolyPoint (Vector3 position, Vector3 inTangent, Vector3 outTangent) {
 		this.position = position;
-		this.inTangent = tangent;
-		this.outTangent = tangent;
+		this.inTangent = inTangent;
+		this.outTangent = outTangent;
 		this.color = Color.white;
 		this.size = 1;
 	}
 
-	public PrettyPolyPoint (Vector3 position, Vector3 tangent, Color color, float size) {
+	public PrettyPolyPoint (Vector3 position, Vector3 inTangent, Vector3 outTangent, Color color, float size) {
 		this.position = position;
-		this.inTangent = tangent;
-		this.outTangent = tangent;
+		this.inTangent = inTangent;
+		this.outTangent = outTangent;
 		this.color = color;
 		this.size = size;
 	}

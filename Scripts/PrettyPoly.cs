@@ -33,7 +33,14 @@ public class PrettyPoly : MonoBehaviour {
 	public bool solid = true;
 	public bool addCollider = false;
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
-	[Range(0, 8)] public int subdivisions = 0;
+	[Range(0, 10)] public int subdivisions = 0;
+
+	public enum CurveType {
+		Linear,
+		CatmullRom,
+		CubicBezier,
+	}
+	public CurveType curveType = CurveType.CatmullRom;
 	
 	[SerializeField, Array] public PrettyPolyMeshLayer[] meshLayers;	
 	[SerializeField, Array] public PrettyPolyObjectLayer[] objectLayers;	
@@ -53,6 +60,19 @@ public class PrettyPoly : MonoBehaviour {
 			if (Application.isPlaying) return renderer.materials;
 			else return renderer.sharedMaterials;
 		}
+	}
+
+	public PrettyPolyPoint GetClosestPoint (Vector3 point) {
+		float sqDist = Mathf.Infinity;
+		PrettyPolyPoint closest = null;
+		for (int i = 0; i < points.Length; i++) {
+			float d = (points[i].position - point).sqrMagnitude;
+			if (d < sqDist) {
+				sqDist = d;
+				closest = points[i];
+			}
+		}
+		return closest;
 	}
 
 	public int GetClosestSegment (Vector3 point) {
@@ -88,6 +108,17 @@ public class PrettyPoly : MonoBehaviour {
 	}
 
 	public PrettyPolyPoint[] GetCurve () {
+		switch (curveType) {
+			case CurveType.CatmullRom:
+				return GetCatmullRom();
+			case CurveType.CubicBezier:
+				return GetCubicBezier();
+			default:
+				return points;
+		}
+	}
+
+	public PrettyPolyPoint[] GetCatmullRom () {
 		int len = points.Length;
 		if (len <= 2) return points;
 		List<PrettyPolyPoint> newPoints = new List<PrettyPolyPoint>();
@@ -106,6 +137,28 @@ public class PrettyPoly : MonoBehaviour {
 			for (float j = 0; j < subdivisions; j++) {
 				float t = j / (float)subdivisions;
 				Vector3 pos = Interpolate.CatmullRom(prev.position, start.position, end.position, next.position, t);
+				PrettyPolyPoint prettyPolyPoint = new PrettyPolyPoint(pos);
+				prettyPolyPoint.color = Color.Lerp(start.color, end.color, t);
+				prettyPolyPoint.size = Mathf.Lerp(start.size, end.size, t);
+				newPoints.Add(prettyPolyPoint);
+			}
+		}
+		return newPoints.ToArray();
+	}
+
+	public PrettyPolyPoint[] GetCubicBezier () {
+		int len = points.Length;
+		if (len <= 2) return points;
+		List<PrettyPolyPoint> newPoints = new List<PrettyPolyPoint>();
+		for (int i = 0; i < len; i++) {
+			PrettyPolyPoint start = points[i];
+			PrettyPolyPoint end = points[(i + 1) % len];
+			Vector3 cp1 = start.position + start.outTangent;
+			Vector3 cp2 = end.position + end.inTangent;
+			
+			for (float j = 0; j < subdivisions; j++) {
+				float t = j / (float)subdivisions;
+				Vector3 pos = Interpolate.CubicBezier(start.position, cp1, cp2, end.position, t);
 				PrettyPolyPoint prettyPolyPoint = new PrettyPolyPoint(pos);
 				prettyPolyPoint.color = Color.Lerp(start.color, end.color, t);
 				prettyPolyPoint.size = Mathf.Lerp(start.size, end.size, t);
