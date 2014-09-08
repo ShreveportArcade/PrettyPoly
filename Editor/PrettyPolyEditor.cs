@@ -58,7 +58,7 @@ public class PrettyPolyEditor : Editor {
         }
     }
 
-	[MenuItem("GameObject/Create Other/PrettyPoly")]
+	[MenuItem("GameObject/2D Object/PrettyPoly")]
 	static void CreatePrettyPoly () {
 		GameObject go = new GameObject("PrettyPoly");
 		PrettyPoly p = go.AddComponent<PrettyPoly>();
