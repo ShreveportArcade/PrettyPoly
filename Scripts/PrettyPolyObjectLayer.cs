@@ -34,23 +34,16 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		Vector3[] positions = System.Array.ConvertAll(points, p => p.position);
 		if (points.Length < 2) return;
 
+		FixParams();
+
 		float pathLength = positions.PathLength(closed);
 		
 		switch (layerType) {
 			case (LayerType.Stroke):
 				AddStroke(root, positions, pathLength, closed);
 				break;
-			case (LayerType.Line):
-				// AddLine(root, positions, pathLength, closed);
-				break;
-			case (LayerType.Cap):
-				// AddCap(root, positions);
-				break;
 			case (LayerType.InnerFill):
 				AddInnerFill(root, positions, pathLength);
-				break;
-			case (LayerType.OuterFill):
-				// AddOuterFill(root, positions, pathLength);
 				break;
 		}
 	}
@@ -99,10 +92,6 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			}
 		}
 		root.DestroyChildrenAfter(index);
-	}
-
-	public void AddOuterFill (Transform root, Vector3[] points, float pathLength) {
-
 	}
 		
 	public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index, float t) {

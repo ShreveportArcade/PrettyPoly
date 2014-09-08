@@ -84,7 +84,10 @@ Shader "PrettyPoly/Particle" {
 				disp.xy += float2(_Disp.x * cos(ang) - _Disp.y * sin(ang),
 	 						   _Disp.y * cos(ang) + _Disp.x * sin(ang));
  								
-				v.vertex.xyz = lerp(disp, v.vertex.xyz, _Weight);
+ 				float w = 1-_Weight;
+ 				w = w * w * w * w;
+ 				w = 1-w;
+ 				v.vertex.xyz = lerp(disp, v.vertex.xyz, w);
 				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 				
 				o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);

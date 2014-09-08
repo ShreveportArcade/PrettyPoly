@@ -33,7 +33,8 @@ public class PrettyPolyLayer {
 		Line,
 		Cap,
 		InnerFill,
-		OuterFill
+		OuterFill,
+		StrokeFill
 	}
 
 	public LayerType layerType = LayerType.Stroke;
@@ -92,6 +93,11 @@ public class PrettyPolyLayer {
 			float r = Mathf.Deg2Rad * naturalAngle;
 			return new Vector3(Mathf.Cos(r), Mathf.Sin(r), 0); 
 		}
+	}
+
+	public void FixParams () {
+		if (spacing < 0.01f) spacing = 0.01f;
+		if (size < 0.01f) size = 0.01f;
 	}
 
 	public Color GetShiftedColor (Color color, float t) {

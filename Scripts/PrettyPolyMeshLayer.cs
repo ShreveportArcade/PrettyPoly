@@ -102,6 +102,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Vector3[] positions = System.Array.ConvertAll(points, p => p.position);
 		if (points.Length < 2) return null;
 		Clear();
+		FixParams();
 
 		float pathLength = positions.PathLength(closed);
 		if (winding < 0) positions = positions.Reverse();
@@ -113,14 +114,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			case (LayerType.Line):
 				AddLine(positions, pathLength, closed);
 				break;
-			case (LayerType.Cap):
-				// AddCap(positions);
-				break;
 			case (LayerType.InnerFill):
 				AddInnerFill(positions, pathLength);
 				break;
-			case (LayerType.OuterFill):
-				// AddOuterFill(positions, pathLength);
+			case (LayerType.StrokeFill):
+				AddStrokeFill(positions, pathLength);
 				break;
 		}
 
@@ -440,8 +438,19 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		}
 	}
 
-	public void AddOuterFill (Vector3[] points, float pathLength) {
-
+	public void AddStrokeFill (Vector3[] points, float pathLength) {
+		Polygon poly = new Polygon(points);
+		Bounds b = points.GetBounds();
+		float s = size * 2 * spacing;
+		int index = 0;
+		for (float x = b.min.x; x < b.max.x; x += s) {
+			for (float y = b.min.y; y < b.max.y; y += s) {
+				Vector3 p = new Vector3(x, y, 0);
+				if (poly.Contains(p)) {
+					AddStrokeQuad (p, Vector3.right, ref index, 0);
+				}
+			}
+		}
 	}
 }
 }
