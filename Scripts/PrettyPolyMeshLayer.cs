@@ -212,7 +212,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 							break;
 						case JoinType.Rounded:
 							float rot = Vector3.Angle(prevOut, currOut);
-							AddRound(pivot, -currOut, -prevOut, -rot, size, c, true, ref index);
+							AddRound(pivot, -prevOut, -currOut, rot, size, c, true, ref index);
 							break;
 					}
 				}
