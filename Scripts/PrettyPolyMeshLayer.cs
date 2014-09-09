@@ -93,7 +93,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		);
 
 		float left = rect.x + rect.width * start;
-		float right = left + rect.width * (end + start);
+		float right = left + rect.width * (end - start);
 		float bottom = rect.y;
 		float top = bottom + rect.height;
 

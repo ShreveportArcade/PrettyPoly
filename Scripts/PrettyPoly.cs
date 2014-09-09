@@ -238,6 +238,7 @@ public class PrettyPoly : MonoBehaviour {
 		else GetComponent<MeshFilter>().sharedMesh = mesh;
 
 		if (addCollider) AddCollider(pts);
+		else gameObject.DestroyComponent<PolygonCollider2D>(); // why with the error?
 	}
 
 	[ContextMenu("Update Objects")]
