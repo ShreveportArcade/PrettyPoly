@@ -69,12 +69,18 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public Vector2[] GetSpriteUVs () {
+		return GetSpriteUVs(0, 1);
+	}
+
+	public Vector2[] GetSpriteUVs (float start, float end) {
 		if (sprite == null) {
+			Vector2 a = Vector2.right * start;
+			Vector2 b = -Vector2.right * (1 - end);
 			return new Vector2[] {
-				Vector2.up,
-				Vector2.one,
-				Vector2.right,
-				Vector2.zero
+				Vector2.up + a,
+				Vector2.one + b,
+				Vector2.right + b,
+				Vector2.zero + a
 			};
 		}
 
@@ -85,8 +91,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			sprite.textureRect.height / (float)sprite.texture.height
 		);
 
-		float left = rect.x;
-		float right = left + rect.width;
+		float left = rect.x + rect.width * start;
+		float right = left + rect.width * (end + start);
 		float bottom = rect.y;
 		float top = bottom + rect.height;
 
@@ -96,6 +102,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			new Vector2(right, bottom),
 			new Vector2(left, bottom)
 		};
+	}
+
+	public float GetWidthToHeightRatio () {
+		if (sprite == null) return 1;
+		return sprite.textureRect.width / sprite.textureRect.height;
 	}
 
 	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed, float winding) {
@@ -136,6 +147,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
+		float uvFrac = 0;
 		
 		Vector3 prev = points[points.Length-1];
 		Vector3 curr = points[0];
@@ -153,7 +165,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		float currCavity = Vector3.Cross(prevOut, currOut).z;
 		float nextCavity = Vector3.Cross(currOut, nextOut).z;
 		
-		for (int i = 1; i < segments+1; i++) {
+		for (int i = 1; i < segments; i++) {
 			Random.seed = index + seed;
 			
 			prev = curr;
@@ -189,14 +201,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				if (prevOutExists && currCavity < 0) {
 					switch (outerJoinType) {
 						case JoinType.Miter:
-							AddMiter(curr, currOut, prevOut, size, c, false, ref index);
+							AddMiter(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
 							break;
 						case JoinType.Bevel:
-							AddBevel(curr, currOut, prevOut, abIntersect, size, c, false, ref index);
+							AddBevel(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
 							break;
 						case JoinType.Rounded:
 							float rot = Vector3.Angle(prevOut, currOut);
-							AddRound(curr, currOut, prevOut, rot, size, c, false, ref index);
+							AddRound(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
 							break;
 					}
 				}
@@ -205,14 +217,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					Vector3 pivot = curr + abIntersect * size;
 					switch (innerJoinType) {
 						case JoinType.Miter:
-							AddMiter(pivot, -currOut, -prevOut, size, c, true, ref index);
+							AddMiter(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
 							break;
 						case JoinType.Bevel:
-							AddBevel(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index);
+							AddBevel(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
 							break;
 						case JoinType.Rounded:
 							float rot = Vector3.Angle(prevOut, currOut);
-							AddRound(pivot, -prevOut, -currOut, rot, size, c, true, ref index);
+							AddRound(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
 							break;
 					}
 				}
@@ -221,12 +233,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					b = next + (bcIntersect - currOut) * size;
 				}
 				
-				AddLineSegment(a, b, currOut, size, c, ref index);
+				AddLineSegment(a, b, currOut, size, c, ref index, ref uvFrac);
 			}
 		}
 	}
 
-	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index) {
+	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		int segments = Mathf.CeilToInt(Mathf.Abs(rotation));
 		if (segments == 0) return;
 		
@@ -267,7 +279,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += segments + 2;
 	}
 
-	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index) {
+	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + outward * size,
@@ -289,7 +301,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 3;
 	}
 
-	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index) {
+	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + bevelOut * size,
@@ -312,25 +324,42 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 4;
 	}
 
-	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index) {
+	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index, ref float uvFrac) {
+		Vector3 dir = (b - a).normalized;
+		float dist = Vector3.Distance(a, b);
+		float segLen = size * GetWidthToHeightRatio();
 		outward *= size;
-		verts.AddRange(new Vector3[] {
-			a + outward,
-			b + outward,
-			b,
-			a
-		});
-		
-		uvs.AddRange(GetSpriteUVs());
-		colors.AddRange(new Color[] {c, c, c, c});
-		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
-
 		Vector4 tan = (Vector4)outward;
 		tan.w = 1;
-		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
 
-		tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
-		index += 4;
+		float distTraveled = 0;
+		float distToNext = Mathf.Min(segLen * (1 - uvFrac), dist);
+		float nextUvFrac = uvFrac + (distToNext / segLen);
+		Vector3 curr = a;
+		Vector3 next = a + dir * distToNext;
+		while (distTraveled < dist) {
+			
+			verts.AddRange(new Vector3[] {
+				curr + outward,
+				next + outward,
+				next,
+				curr
+			});
+			
+			uvs.AddRange(GetSpriteUVs(uvFrac, nextUvFrac));
+			colors.AddRange(new Color[] {c, c, c, c});
+			norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
+			tans.AddRange(new Vector4[] {tan, tan, tan, tan});
+			tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
+			index += 4;
+
+			distTraveled += distToNext;
+			uvFrac = nextUvFrac % 1f;
+			distToNext = Mathf.Min(segLen * (1 - uvFrac), dist - distTraveled);
+			nextUvFrac = uvFrac + (distToNext / segLen);
+			curr = next;
+			next = curr + dir * distToNext;
+		}
 	}
 
 	public void AddStroke (Vector3[] points, float pathLength, bool closed) {
