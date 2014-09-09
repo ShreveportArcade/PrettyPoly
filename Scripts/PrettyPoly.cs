@@ -209,7 +209,9 @@ public class PrettyPoly : MonoBehaviour {
 		}
 		
 		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
-		float winding = System.Array.ConvertAll(pts, point => point.position).Winding();
+		float winding = 0;
+		if (closed) System.Array.ConvertAll(pts, point => point.position).ClosedWinding();
+		else System.Array.ConvertAll(pts, point => point.position).Winding();
 		for (int i = 0; i < meshLayers.Length; i++) {
 			Mesh m = sortedLayers[i].GetMesh(pts, closed, winding);
 			if (m == null) continue;

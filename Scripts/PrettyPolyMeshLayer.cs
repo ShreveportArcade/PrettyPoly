@@ -145,6 +145,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddLine (Vector3[] points, float pathLength, bool closed) {
+		Random.seed = seed;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
@@ -155,9 +156,13 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Vector3 next = points[1];
 		Vector3 future = points[2%points.Length];
 		
-		Vector3 prevOut = Vector3.Cross((prev - curr).normalized, -Vector3.forward);
-		Vector3 currOut = Vector3.Cross((next - curr).normalized, -Vector3.forward);
-		Vector3 nextOut = Vector3.Cross((future - next).normalized, -Vector3.forward);
+		Vector3 currDir = (prev - curr).normalized;
+		Vector3 nextDir = (next - curr).normalized;
+		Vector3 futureDir = (future - next).normalized;
+
+		Vector3 prevOut = Vector3.Cross(currDir, -Vector3.forward);
+		Vector3 currOut = Vector3.Cross(nextDir, -Vector3.forward);
+		Vector3 nextOut = Vector3.Cross(futureDir, -Vector3.forward);
 		
 		bool prevOutExists = ExistsInDirection(prevOut);
 		bool currOutExists = ExistsInDirection(currOut);
@@ -173,10 +178,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			curr = next;
 			next = future;
 			future = points[(i+2)%points.Length];
+
+			currDir = nextDir;
+			nextDir = futureDir;
+			futureDir = (future - next).normalized;
 			
 			prevOut = currOut;
 			currOut = nextOut;
-			nextOut = Vector3.Cross((future - next).normalized, -Vector3.forward);
+			nextOut = Vector3.Cross(futureDir, -Vector3.forward);
 
 			prevOutExists = currOutExists;
 			currOutExists = nextOutExists;
@@ -193,9 +202,9 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			if (currOutExists) {
 				Vector3 a = curr;
 				Vector3 b = next;
-				Line2D lineA = new Line2D(prevOut, prevOut + (curr - prev).normalized);
-				Line2D lineB = new Line2D(currOut, currOut + (next - curr).normalized);
-				Line2D lineC = new Line2D(nextOut, nextOut + (future - next).normalized);
+				Line2D lineA = new Line2D(prevOut, prevOut + currDir);
+				Line2D lineB = new Line2D(currOut, currOut + nextDir);
+				Line2D lineC = new Line2D(nextOut, nextOut + futureDir);
 				Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
 				Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
 				
