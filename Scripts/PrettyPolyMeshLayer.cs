@@ -111,7 +111,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed, float winding) {
-		Vector3[] positions = System.Array.ConvertAll(points, p => p.position);
+		Vector3[] positions = System.Array.ConvertAll(points, p => p.position + posOffset);
 		if (points.Length < 2) return null;
 		Clear();
 		FixParams();

@@ -80,6 +80,7 @@ public class PrettyPolyLayer {
 		followPath = true;
 		size = 1;
 		minTileSize = 100;
+		color = Color.white;
 		angleOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
 		sizeOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
 		hueOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
@@ -121,7 +122,7 @@ public class PrettyPolyLayer {
 	}
 
 	public Vector3 GetPosition (Vector3 position, Vector3 right, Vector3 up, float size) {
-		return position + posOffset +
+		return position +
 			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * size + 
 			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * size;
 	}
