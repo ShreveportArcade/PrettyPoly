@@ -39,6 +39,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	public JoinType outerJoinType = JoinType.None;
 	public JoinType innerJoinType = JoinType.None;
 
+	public bool allowStretching = false;
 	public bool isTrigger = false;
 
 	protected List<Vector3> verts = new List<Vector3>();
@@ -337,6 +338,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		float nextUvFrac = uvFrac + (distToNext / segLen);
 		Vector3 curr = a;
 		Vector3 next = a + dir * distToNext;
+		if (allowStretching) {
+			distToNext = dist;
+			uvFrac = 0;
+			nextUvFrac = 1;
+			curr = a;
+			next = b;
+		}
+
 		while (distTraveled < dist) {
 			
 			verts.AddRange(new Vector3[] {
