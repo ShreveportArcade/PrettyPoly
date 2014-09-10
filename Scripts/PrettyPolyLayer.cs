@@ -42,7 +42,7 @@ public class PrettyPolyLayer {
 	
 	// position
 	public Vector3 posOffset = Vector3.zero;
-	public Vector2 dirOffset = Vector2.zero;
+	public float dirOffset = 0;
 	public float spacing = 1;
 	public float positionVariation = 0;
 	[Range(0,1)] public float placementFrequency = 1;
@@ -96,6 +96,12 @@ public class PrettyPolyLayer {
 		}
 	}
 
+	public Vector3[] GetOffset (PrettyPolyPoint[] points) {
+		Vector2[] path = System.Array.ConvertAll(points, p => (Vector2)p.position);
+		Polygon poly = new Polygon(path);
+		return System.Array.ConvertAll(poly.GetOffsetPath(dirOffset), p => (Vector3)p + posOffset);
+	}
+
 	public void FixParams () {
 		if (spacing < 0.01f) spacing = 0.01f;
 		if (size < 0.01f) size = 0.01f;
@@ -123,8 +129,8 @@ public class PrettyPolyLayer {
 
 	public Vector3 GetPosition (Vector3 position, Vector3 right, Vector3 up, float size) {
 		return position +
-			right * (Random.Range(-positionVariation, positionVariation) + dirOffset.x) * size + 
-			up * (Random.Range(-positionVariation, positionVariation) + dirOffset.y) * size;
+			right * Random.Range(-positionVariation, positionVariation) * size + 
+			up * Random.Range(-positionVariation, positionVariation) * size;
 	}
 
 	public Vector3 GetDirection (Vector3 dir, int index, float t) {

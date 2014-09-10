@@ -29,13 +29,11 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	public Object prefab;
 
 	public void UpdateObjects (Transform root, PrettyPolyPoint[] points, bool closed) {
-		if (prefab == null) return;
-		
-		Vector3[] positions = System.Array.ConvertAll(points, p => p.position + posOffset);
-		if (points.Length < 2) return;
-
+		if (prefab == null || points.Length < 2) return;
 		FixParams();
 
+		Vector3[] positions = GetOffset(points);
+		
 		float pathLength = positions.PathLength(closed);
 		
 		switch (layerType) {

@@ -74,16 +74,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public Vector2[] GetSpriteUVs (float start, float end) {
-		return GetSpriteUVs(new Vector2(start, 0), new Vector2(end, 1));
-	}
-
-	public Vector2[] GetSpriteUVs (Vector2 start, Vector2 end) {
 		if (sprite == null) {
+			Vector2 a = Vector2.right * start;
+			Vector2 b = -Vector2.right * (1 - end);
 			return new Vector2[] {
-				new Vector2(start.x, end.y),
-				end,
-				new Vector2(end.x, start.y),
-				start
+				Vector2.up + a,
+				Vector2.one + b,
+				Vector2.right + b,
+				Vector2.zero + a
 			};
 		}
 
@@ -94,10 +92,10 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			sprite.textureRect.height / (float)sprite.texture.height
 		);
 
-		float left = rect.x + rect.width * start.x;
-		float right = left + rect.width * (end.x - start.x);
-		float bottom = rect.y + rect.height * start.y;
-		float top = bottom + rect.height * (end.y - start.y);
+		float left = rect.x + rect.width * start;
+		float right = left + rect.width * (end - start);
+		float bottom = rect.y;
+		float top = bottom + rect.height;
 
 		return new Vector2[] {
 			new Vector2(left, top),
@@ -113,11 +111,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed, float winding) {
-		Vector3[] positions = System.Array.ConvertAll(points, p => p.position + posOffset);
-		if (points.Length < 2) return null;
-		Clear();
 		FixParams();
-
+		Vector3[] positions = GetOffset(points);
+		if (positions.Length < 2) return null;
+		Clear();
+		
 		float pathLength = positions.PathLength(closed);
 		if (winding < 0) positions = positions.Reverse();
 				
@@ -126,7 +124,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				AddStroke(positions, pathLength, closed);
 				break;
 			case (LayerType.Line):
-				AddLine(positions, pathLength, closed, dirOffset.y);
+				AddLine(positions, pathLength, closed);
 				break;
 			case (LayerType.InnerFill):
 				AddInnerFill(positions, pathLength);
@@ -146,9 +144,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		return mesh;
 	}
 
-	public void AddLine (Vector3[] points, float pathLength, bool closed, float offset) {
-		offset = Mathf.Clamp(offset, -1, 0);
-		
+	public void AddLine (Vector3[] points, float pathLength, bool closed) {
 		Random.seed = seed;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
@@ -201,111 +197,58 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			distTraveled += Vector3.Distance(curr, next);
 			float t = distTraveled / pathLength;
 			float size = GetSize(t);
-			float innerSize = -offset * size;
-			float outerSize = size * (1 + offset);
 			Color c = GetShiftedColor(color, t);
 
 			if (currOutExists) {
-				float startUVFrac = uvFrac;
-				if (offset > -1) {
-					Vector3 a = curr;
-					Vector3 b = next;
-					Line2D lineA = new Line2D(prevOut, prevOut + currDir);
-					Line2D lineB = new Line2D(currOut, currOut + nextDir);
-					Line2D lineC = new Line2D(nextOut, nextOut + futureDir);
-					Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
-					Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
-					
-					if (prevOutExists && currCavity < 0) {
-						switch (outerJoinType) {
-							case JoinType.Miter:
-								AddMiter(curr, currOut, prevOut, outerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-							case JoinType.Bevel:
-								AddBevel(curr, currOut, prevOut, abIntersect, outerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-							case JoinType.Rounded:
-								float rot = Vector3.Angle(prevOut, currOut);
-								AddRound(curr, currOut, prevOut, rot, outerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-						}
+				Vector3 a = curr;
+				Vector3 b = next;
+				Line2D lineA = new Line2D(prevOut, prevOut + currDir);
+				Line2D lineB = new Line2D(currOut, currOut + nextDir);
+				Line2D lineC = new Line2D(nextOut, nextOut + futureDir);
+				Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
+				Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
+				
+				if (prevOutExists && currCavity < 0) {
+					switch (outerJoinType) {
+						case JoinType.Miter:
+							AddMiter(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
+							break;
+						case JoinType.Bevel:
+							AddBevel(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
+							break;
+						case JoinType.Rounded:
+							float rot = Vector3.Angle(prevOut, currOut);
+							AddRound(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
+							break;
 					}
-					if (prevOutExists && currCavity > 0) {
-						a = curr + (abIntersect - currOut) * outerSize;
-						Vector3 pivot = curr + abIntersect * outerSize;
-						switch (innerJoinType) {
-							case JoinType.Miter:
-								AddMiter(pivot, -currOut, -prevOut, outerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-							case JoinType.Bevel:
-								AddBevel(pivot, -currOut, -prevOut, -abIntersect, outerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-							case JoinType.Rounded:
-								float rot = Vector3.Angle(prevOut, currOut);
-								AddRound(pivot, -prevOut, -currOut, rot, outerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-						}
+				}
+				if (prevOutExists && currCavity > 0) {
+					a = curr + (abIntersect - currOut) * size;
+					Vector3 pivot = curr + abIntersect * size;
+					switch (innerJoinType) {
+						case JoinType.Miter:
+							AddMiter(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
+							break;
+						case JoinType.Bevel:
+							AddBevel(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
+							break;
+						case JoinType.Rounded:
+							float rot = Vector3.Angle(prevOut, currOut);
+							AddRound(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
+							break;
 					}
-
-					if (nextOutExists && nextCavity > 0) {
-						b = next + (bcIntersect - currOut) * outerSize;
-					}
-					
-					AddLineSegment(a, b, currOut, outerSize, offset, c, ref index, ref uvFrac);
 				}
 
-				if (offset < 0) {
-					uvFrac = startUVFrac;
-					Vector3 a = curr;
-					Vector3 b = next;
-					Line2D lineA = new Line2D(-prevOut, -prevOut + currDir);
-					Line2D lineB = new Line2D(-currOut, -currOut + nextDir);
-					Line2D lineC = new Line2D(-nextOut, -nextOut + futureDir);
-					Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
-					Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
-					
-					if (prevOutExists && currCavity < 0) {
-						a = curr + (abIntersect + currOut) * innerSize;
-						Vector3 pivot = curr + abIntersect * innerSize;
-						switch (innerJoinType) {
-							case JoinType.Miter:
-								AddMiter(pivot, currOut, prevOut, innerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-							case JoinType.Bevel:
-								AddBevel(pivot, currOut, prevOut, -abIntersect, innerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-							case JoinType.Rounded:
-								float rot = Vector3.Angle(-prevOut, -currOut);
-								AddRound(pivot, currOut, prevOut, rot, innerSize, offset, c, true, ref index, ref uvFrac);
-								break;
-						}
-					}
-					if (prevOutExists && currCavity > 0) {
-						switch (outerJoinType) {
-							case JoinType.Miter:
-								AddMiter(curr, -currOut, -prevOut, innerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-							case JoinType.Bevel:
-								AddBevel(curr, -currOut, -prevOut, abIntersect, innerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-							case JoinType.Rounded:
-								float rot = Vector3.Angle(-prevOut, -currOut);
-								AddRound(curr, -prevOut, -currOut, rot, innerSize, offset, c, false, ref index, ref uvFrac);
-								break;
-						}
-					}
-
-					if (nextOutExists && nextCavity < 0) {
-						b = next + (bcIntersect + currOut) * innerSize;
-					}
-					
-					AddLineSegment(a, b, -currOut, innerSize, offset, c, ref index, ref uvFrac);
+				if (nextOutExists && nextCavity > 0) {
+					b = next + (bcIntersect - currOut) * size;
 				}
+				
+				AddLineSegment(a, b, currOut, size, c, ref index, ref uvFrac);
 			}
 		}
 	}
 
-	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, float offset, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		int segments = Mathf.CeilToInt(Mathf.Abs(rotation));
 		if (segments == 0) return;
 		
@@ -346,7 +289,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += segments + 2;
 	}
 
-	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, float offset, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + outward * size,
@@ -368,7 +311,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 3;
 	}
 
-	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, float offset, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + bevelOut * size,
@@ -391,7 +334,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 4;
 	}
 
-	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, float offset, Color c, ref int index, ref float uvFrac) {
+	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index, ref float uvFrac) {
 		Vector3 dir = (b - a).normalized;
 		float dist = Vector3.Distance(a, b);
 		float segLen = size * GetWidthToHeightRatio();
