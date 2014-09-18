@@ -26,7 +26,10 @@ namespace PrettyPoly {
 [System.Serializable]
 public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	
-	public Object prefab;
+	[Space(10)]
+	[Header("Object Settings")]
+	[Tooltip("The prefab to be scattered.")]
+    public Object prefab;
 
 	public void UpdateObjects (Transform root, PrettyPolyPoint[] points, bool closed) {
 		if (prefab == null || points.Length < 2) return;

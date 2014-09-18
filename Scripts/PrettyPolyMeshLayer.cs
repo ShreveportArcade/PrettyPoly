@@ -26,8 +26,17 @@ namespace PrettyPoly {
 [System.Serializable]
 public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
-	public Sprite sprite;
-	public int materialIndex = 0;
+	[Space(10)]
+	[Header("Mesh Settings")]
+	
+	[Tooltip("If multiple sprites are used, they must come from a texture atlas.")]
+    public Sprite sprite;
+	
+	[Tooltip("Material used to render the sprite.")]
+    public int materialIndex = 0;
+
+    [Tooltip("Used for tiling solid fills.")]
+    public float minTileSize = 100;
 
 	public enum JoinType {
 		None,
@@ -36,11 +45,17 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Rounded
 	}
 
-	public JoinType outerJoinType = JoinType.None;
-	public JoinType innerJoinType = JoinType.None;
+	[Tooltip("Solid edge join type for convex angles.")]
+    public JoinType outerJoinType = JoinType.None;
+	
+	[Tooltip("Solid edge join type for concave angles.")]
+    public JoinType innerJoinType = JoinType.None;
 
-	public bool allowStretching = false;
-	public bool isTrigger = false;
+	[Tooltip("If false, the sprite is tiled.\n Otherwise, a single quad is used for edges.")]
+    public bool allowStretching = false;
+	
+	[Tooltip("If true, this layer gives collision callbacks.")]
+    public bool isTrigger = false;
 
 	protected List<Vector3> verts = new List<Vector3>();
 	protected List<Vector2> uvs = new List<Vector2>();

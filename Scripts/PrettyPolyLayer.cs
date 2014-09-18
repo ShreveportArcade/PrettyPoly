@@ -26,7 +26,8 @@ namespace PrettyPoly {
 [System.Serializable]
 public class PrettyPolyLayer {
 
-	public string name = "New Layer";
+	[Tooltip("Used in collision callbacks.")]
+    public string name = "New Layer";
 
 	public enum LayerType {
 		Stroke,
@@ -37,41 +38,77 @@ public class PrettyPolyLayer {
 		StrokeFill
 	}
 
-	public LayerType layerType = LayerType.Stroke;
-	public int seed = 0;
+	[Tooltip("Defines the layer's drawing ruleset.")]
+    public LayerType layerType = LayerType.Stroke;
 	
-	// position
-	public Vector3 posOffset = Vector3.zero;
-	public float dirOffset = 0;
-	public float spacing = 1;
-	public float positionVariation = 0;
-	[Range(0,1)] public float placementFrequency = 1;
+	[Tooltip("Seed value for random number generator.")]
+    public int seed = 0;
 	
-	// rotation
-	public bool followPath = true;
-	public bool alternateAngles = false;
-	[Range(0,360)] public float angle = 0;
-	public AnimationCurve angleOffsets;
-	[Range(0,180)] public float angleVariation = 0;
-	[Range(-180,180)] public float naturalAngle = 0;
-	[Range(0,1)] public float angularPlacementRange = 0;
+	[Space(10)]
+	[Header("Position Settings")]
 	
-	// scale
-	public float size = 1;
-	public AnimationCurve sizeOffsets;
-	[Range(0,1)] public float sizeVariation;
-	public float minTileSize = 100;
+	[Tooltip("Shifts polygon's points in a direction.")]
+    public Vector3 posOffset = Vector3.zero;
+	
+	[Tooltip("Shrinks or grows polygon's points along normals.")]
+    public float dirOffset = 0;
+	
+	[Tooltip("Space between objects in scatter layers.")]
+    public float spacing = 1;
+	
+	[Tooltip("Amount to randomly offset positions of objects in scatter layers.")]
+    public float positionVariation = 0;
+	
+	[Tooltip("How often objects in scatter layers should be placed.")]
+    [Range(0,1)] public float placementFrequency = 1;
+	
+	[Space(10)]
+	[Header("Rotation Settings")]
+	
+	[Tooltip("If true, object rotations are relative to normals.")]
+    public bool followPath = true;
+	
+	[Tooltip("If true, every other object is rotated in the opposite direction.")]
+    public bool alternateAngles = false;
+	
+	[Tooltip("Base rotation of each scattered object.")]
+    [Range(0,360)] public float angle = 0;
 
-	// color
-	public Color color = Color.white;	
-	public AnimationCurve hueOffsets;
-	[Range(0,1)] public float hueVariation;
-	public AnimationCurve saturationOffsets;
-	[Range(0,1)] public float saturationVariation;
-	public AnimationCurve valueOffsets;
-	[Range(0,1)] public float valueVariation;
-	public AnimationCurve alphaOffsets;
-	[Range(0,1)] public float alphaVariation;
+	[Tooltip("Amount to randomly offset rotations of objects in scatter layers.")]
+    [Range(0,180)] public float angleVariation = 0;
+	
+	[Tooltip("Normal direction to draw an edge.")]
+    [Range(-180,180)] public float naturalAngle = 0;
+	
+	[Tooltip("Angular range for edge placement.\n0 = only in natural direction\n1 = all the way around")]
+    [Range(0,1)] public float angularPlacementRange = 0;
+	
+	[Space(10)]
+	[Header("Scale Settings")]
+
+	[Tooltip("Size of scattered objects.")]
+    public float size = 1;
+
+	[Tooltip("Amount to randomly offset sizes of objects in scatter layers.")]
+    public float sizeVariation;
+	
+	[Space(10)]
+	[Header("Color Settings")]
+	
+	[Tooltip("Base color.")]
+    public Color color = Color.white;	
+
+	[Tooltip("Amount to randomly offset the hue.")]
+    [Range(0,1)] public float hueVariation;
+
+	[Tooltip("Amount to randomly offset the saturation.")]
+    [Range(0,1)] public float saturationVariation;
+
+	[Tooltip("Amount to randomly offset the color value.")]
+    [Range(0,1)] public float valueVariation;
+
+	[Tooltip("Amount to randomly offset the alpha.")]
+    [Range(0,1)] public float alphaVariation;
 	
 	public PrettyPolyLayer () {
 		name = "New Layer";
@@ -79,14 +116,7 @@ public class PrettyPolyLayer {
 		placementFrequency = 1;
 		followPath = true;
 		size = 1;
-		minTileSize = 100;
 		color = Color.white;
-		angleOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
-		sizeOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
-		hueOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
-		saturationOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
-		valueOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
-		alphaOffsets = new AnimationCurve(new Keyframe(0,0), new Keyframe(1,0));
 	}
 
 	public Vector3 naturalDirection {
@@ -109,10 +139,10 @@ public class PrettyPolyLayer {
 
 	public Color GetShiftedColor (Color color, float t) {
 		Vector4 hsv = ColorUtils.RGBtoHSV(color);
-		hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f + hueOffsets.Evaluate(t)) % 1f);
-		hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation) + saturationOffsets.Evaluate(t));
-		hsv.z = Mathf.Clamp01(hsv.z + Random.Range(-valueVariation,valueVariation) + valueOffsets.Evaluate(t));
-		hsv.w = Mathf.Clamp01(hsv.w + Random.Range(-alphaVariation,alphaVariation) + alphaOffsets.Evaluate(t));
+		hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f) % 1f);
+		hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation));
+		hsv.z = Mathf.Clamp01(hsv.z + Random.Range(-valueVariation,valueVariation));
+		hsv.w = Mathf.Clamp01(hsv.w + Random.Range(-alphaVariation,alphaVariation));
 		return ColorUtils.HSVtoRGB(hsv);
 	}
 
@@ -122,7 +152,7 @@ public class PrettyPolyLayer {
 	}
 
 	public float GetSize (float t) {
-		float s = size * (1 - Random.Range(-sizeVariation, sizeVariation)) + sizeOffsets.Evaluate(t);
+		float s = size * (1 - Random.Range(-sizeVariation, sizeVariation));
 		if (s < 0.001f && s > -0.001f) s = 0.001f * Mathf.Sign(s);
 		return s;
 	}
@@ -136,7 +166,6 @@ public class PrettyPolyLayer {
 	public Vector3 GetDirection (Vector3 dir, int index, float t) {
 		Vector3 normal = -Vector3.forward;
 		float a = angle;
-		a += angleOffsets.Evaluate(t);
 		if (alternateAngles && (index % 2) == 1) a = 180 - a;
 		if (!followPath) {
 			if (Vector3.Dot(Vector3.up, normal) > 0) dir = Vector3.Cross(-Vector3.up, normal).normalized;
