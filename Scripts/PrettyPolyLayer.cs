@@ -30,16 +30,14 @@ public class PrettyPolyLayer {
     public string name = "New Layer";
 
 	public enum LayerType {
-		Stroke,
-		Line,
-		Cap,
-		InnerFill,
-		OuterFill,
-		StrokeFill
+		ScatterEdge,
+		SolidEdge,
+		ScatterFill,
+		SolidFill
 	}
 
 	[Tooltip("Defines the layer's drawing ruleset.")]
-    public LayerType layerType = LayerType.Stroke;
+    public LayerType layerType = LayerType.ScatterEdge;
 	
 	[Tooltip("Seed value for random number generator.")]
     public int seed = 0;

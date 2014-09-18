@@ -135,17 +135,17 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		if (winding < 0) positions = positions.Reverse();
 				
 		switch (layerType) {
-			case (LayerType.Stroke):
-				AddStroke(positions, pathLength, closed);
+			case (LayerType.ScatterEdge):
+				AddScatterEdge(positions, pathLength, closed);
 				break;
-			case (LayerType.Line):
-				AddLine(positions, pathLength, closed);
+			case (LayerType.SolidEdge):
+				AddSolidEdge(positions, pathLength, closed);
 				break;
-			case (LayerType.InnerFill):
-				AddInnerFill(positions, pathLength);
+			case (LayerType.ScatterFill):
+				AddScatterFill(positions, pathLength);
 				break;
-			case (LayerType.StrokeFill):
-				AddStrokeFill(positions, pathLength);
+			case (LayerType.SolidFill):
+				AddSolidFill(positions, pathLength);
 				break;
 		}
 
@@ -159,7 +159,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		return mesh;
 	}
 
-	public void AddLine (Vector3[] points, float pathLength, bool closed) {
+	public void AddSolidEdge (Vector3[] points, float pathLength, bool closed) {
 		Random.seed = seed;
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
@@ -226,14 +226,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				if (prevOutExists && currCavity < 0) {
 					switch (outerJoinType) {
 						case JoinType.Miter:
-							AddMiter(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
+							AddSolidEdgeMiterJoin(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
 							break;
 						case JoinType.Bevel:
-							AddBevel(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
+							AddSolidEdgeBevelJoin(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
 							break;
 						case JoinType.Rounded:
 							float rot = Vector3.Angle(prevOut, currOut);
-							AddRound(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
+							AddSolidEdgeRoundedJoin(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
 							break;
 					}
 				}
@@ -242,14 +242,14 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					Vector3 pivot = curr + abIntersect * size;
 					switch (innerJoinType) {
 						case JoinType.Miter:
-							AddMiter(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
+							AddSolidEdgeMiterJoin(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
 							break;
 						case JoinType.Bevel:
-							AddBevel(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
+							AddSolidEdgeBevelJoin(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
 							break;
 						case JoinType.Rounded:
 							float rot = Vector3.Angle(prevOut, currOut);
-							AddRound(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
+							AddSolidEdgeRoundedJoin(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
 							break;
 					}
 				}
@@ -258,12 +258,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					b = next + (bcIntersect - currOut) * size;
 				}
 				
-				AddLineSegment(a, b, currOut, size, c, ref index, ref uvFrac);
+				AddSolidEdgeSegment(a, b, currOut, size, c, ref index, ref uvFrac);
 			}
 		}
 	}
 
-	public void AddRound (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddSolidEdgeRoundedJoin (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		int segments = Mathf.CeilToInt(Mathf.Abs(rotation));
 		if (segments == 0) return;
 		
@@ -304,7 +304,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += segments + 2;
 	}
 
-	public void AddMiter (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddSolidEdgeMiterJoin (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + outward * size,
@@ -326,7 +326,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 3;
 	}
 
-	public void AddBevel (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
+	public void AddSolidEdgeBevelJoin (Vector3 pos, Vector3 outward, Vector3 prevOut, Vector3 bevelOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + bevelOut * size,
@@ -349,7 +349,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 4;
 	}
 
-	public void AddLineSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index, ref float uvFrac) {
+	public void AddSolidEdgeSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index, ref float uvFrac) {
 		Vector3 dir = (b - a).normalized;
 		float dist = Vector3.Distance(a, b);
 		float segLen = size * GetWidthToHeightRatio();
@@ -395,16 +395,16 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		}
 	}
 
-	public void AddStroke (Vector3[] points, float pathLength, bool closed) {
+	public void AddScatterEdge (Vector3[] points, float pathLength, bool closed) {
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
 		for (int i = 1; i < segments; i++) {
-			AddStrokeSegment(points[i-1], points[i%points.Length], pathLength, ref distTraveled, ref index);
+			AddScatterEdgeSegment(points[i-1], points[i%points.Length], pathLength, ref distTraveled, ref index);
 		}
 	}
 
-	public void AddStrokeSegment (Vector3 a, Vector3 b, float pathLength, ref float distTraveled, ref int index) {	
+	public void AddScatterEdgeSegment (Vector3 a, Vector3 b, float pathLength, ref float distTraveled, ref int index) {	
 		Vector3 dir = (b - a).normalized;
 		Vector3 outward = Vector3.Cross(dir, -Vector3.forward);
 		if (!ExistsInDirection(outward)) return;
@@ -419,12 +419,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			float frac = (float)i / segments;
 			Vector3 p = Vector3.Lerp(a, b, frac);
 			Random.seed = i + seed;
-			AddStrokeQuad(p, dir, ref index, (distTraveled + dist * frac) / pathLength);
+			AddScatterQuad(p, dir, ref index, (distTraveled + dist * frac) / pathLength);
 		}
 		distTraveled += dist;
 	}
 		
-	public void AddStrokeQuad (Vector3 position, Vector3 dir, ref int index, float t) {
+	public void AddScatterQuad (Vector3 position, Vector3 dir, ref int index, float t) {
 		if (placementFrequency < Random.value) return;
 
 		Random.seed = index + seed;
@@ -459,7 +459,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		index += 4;
 	}
 
-	public void AddInnerFill (Vector3[] points, float pathLength) {
+	public void AddSolidFill (Vector3[] points, float pathLength) {
 
 		int offset = 0;
 		// Polygon[] polys = (new Polygon(points)).Subdivide(Vector2.one * 5); //		HOPE
@@ -500,7 +500,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		}
 	}
 
-	public void AddStrokeFill (Vector3[] points, float pathLength) {
+	public void AddScatterFill (Vector3[] points, float pathLength) {
 		Polygon poly = new Polygon(points);
 		Bounds b = points.GetBounds();
 		float s = size * 2 * spacing;
@@ -509,7 +509,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			for (float y = b.min.y; y < b.max.y; y += s) {
 				Vector3 p = new Vector3(x, y, 0);
 				if (poly.Contains(p)) {
-					AddStrokeQuad (p, Vector3.right, ref index, 0);
+					AddScatterQuad (p, Vector3.right, ref index, 0);
 				}
 			}
 		}

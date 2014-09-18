@@ -40,10 +40,10 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		float pathLength = positions.PathLength(closed);
 		
 		switch (layerType) {
-			case (LayerType.Stroke):
+			case (LayerType.ScatterEdge):
 				AddStroke(root, positions, pathLength, closed);
 				break;
-			case (LayerType.InnerFill):
+			case (LayerType.ScatterFill):
 				AddInnerFill(root, positions, pathLength);
 				break;
 		}
