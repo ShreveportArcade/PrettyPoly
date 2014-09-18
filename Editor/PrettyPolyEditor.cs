@@ -60,12 +60,24 @@ public class PrettyPolyEditor : Editor {
 
 	[MenuItem("GameObject/2D Object/PrettyPoly")]
 	static void CreatePrettyPoly () {
+		Camera sceneCam = SceneView.currentDrawingSceneView.camera;
+        Vector3 spawnPos = sceneCam.ViewportToWorldPoint(new Vector3(0.5f,0.5f,10f));
 		GameObject go = new GameObject("PrettyPoly");
+		go.transform.position = spawnPos;
+		Selection.activeGameObject = go;
+
 		PrettyPoly p = go.AddComponent<PrettyPoly>();
-		p.points = new PrettyPolyPoint[2] {
-			new PrettyPolyPoint(-Vector3.right), 
-			new PrettyPolyPoint(Vector3.right)
+		p.points = new PrettyPolyPoint[] {
+			new PrettyPolyPoint(new Vector3(-1,-1,0)), 
+			new PrettyPolyPoint(new Vector3(1,-1,0)),
+			new PrettyPolyPoint(new Vector3(0,1,0))
 		};
+		p.closed = true;
+		PrettyPolyMeshLayer l = new PrettyPolyMeshLayer();
+		p.meshLayers = new PrettyPolyMeshLayer[] {l};
+		p.UpdateMesh();
+
+		go.renderer.materials = new Material[] {new Material(Shader.Find("Sprites/Default"))};
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 	}
 

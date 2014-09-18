@@ -35,6 +35,9 @@ public class PrettyPoly : MonoBehaviour {
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
 	[Range(0, 10)] public int subdivisions = 0;
 
+	public string sortingLayerName = "Default";
+	public int sortingOrder = 0;
+
 	public enum CurveType {
 		Linear,
 		CatmullRom,
@@ -42,8 +45,8 @@ public class PrettyPoly : MonoBehaviour {
 	}
 	public CurveType curveType = CurveType.CatmullRom;
 	
-	[SerializeField, Array] public PrettyPolyMeshLayer[] meshLayers;	
-	[SerializeField, Array] public PrettyPolyObjectLayer[] objectLayers;	
+	[Array] public PrettyPolyMeshLayer[] meshLayers;	
+	[Array] public PrettyPolyObjectLayer[] objectLayers;	
 
 	private Mesh _mesh;
 	public Mesh mesh {
@@ -240,7 +243,31 @@ public class PrettyPoly : MonoBehaviour {
 		else GetComponent<MeshFilter>().sharedMesh = mesh;
 
 		if (addCollider) AddCollider(pts);
-		else gameObject.DestroyComponent<PolygonCollider2D>(); // why with the error?
+		else gameObject.DestroyComponent<PolygonCollider2D>();
+
+		UpdateRenderer();
+	}
+
+	public void UpdateRenderer () {
+		renderer.sortingLayerName = sortingLayerName;
+		renderer.sortingOrder = sortingOrder;
+
+		MaterialPropertyBlock props = new MaterialPropertyBlock();
+		renderer.GetPropertyBlock(props);
+		props.Clear();
+		renderer.SetPropertyBlock(props);
+				
+		Sprite sprite = null;
+		foreach (PrettyPolyMeshLayer meshLayer in meshLayers) {
+			if (sprite != null && meshLayer.sprite != null && sprite != meshLayer.sprite) {
+				return;
+			}
+			sprite = meshLayer.sprite;
+		}
+
+		if (sprite == null) return;
+		props.AddTexture("_MainTex", meshLayers[0].sprite.texture);
+		renderer.SetPropertyBlock(props);
 	}
 
 	[ContextMenu("Update Objects")]

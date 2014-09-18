@@ -74,6 +74,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		}
 	}
 
+	public PrettyPolyMeshLayer () : base () {
+		minTileSize = 100;
+		outerJoinType = JoinType.Rounded;
+		innerJoinType = JoinType.Rounded;
+	}
+
 	public void Clear () {
 		mesh.Clear();
 		verts.Clear();

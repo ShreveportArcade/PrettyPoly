@@ -37,7 +37,7 @@ public class PrettyPolyLayer {
 	}
 
 	[Tooltip("Defines the layer's drawing ruleset.")]
-    public LayerType layerType = LayerType.ScatterEdge;
+    public LayerType layerType = LayerType.SolidFill;
 	
 	[Tooltip("Seed value for random number generator.")]
     public int seed = 0;
@@ -115,6 +115,7 @@ public class PrettyPolyLayer {
 		followPath = true;
 		size = 1;
 		color = Color.white;
+		layerType = LayerType.SolidFill;
 	}
 
 	public Vector3 naturalDirection {
