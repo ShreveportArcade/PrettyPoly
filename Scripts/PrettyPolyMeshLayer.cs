@@ -33,7 +33,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
     public Sprite sprite;
 	
 	[Tooltip("Material used to render the sprite.")]
-    public int materialIndex = 0;
+    [MaterialIndex] public int materialIndex = 0;
 
     [Tooltip("Used for tiling solid fills.")]
     public float minTileSize = 100;

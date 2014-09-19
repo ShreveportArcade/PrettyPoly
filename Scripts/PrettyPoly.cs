@@ -35,7 +35,7 @@ public class PrettyPoly : MonoBehaviour {
 	public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
 	[Range(0, 10)] public int subdivisions = 0;
 
-	public string sortingLayerName = "Default";
+	[SortingLayer] public string sortingLayerName = "Default";
 	public int sortingOrder = 0;
 
 	public enum CurveType {
@@ -259,14 +259,15 @@ public class PrettyPoly : MonoBehaviour {
 				
 		Sprite sprite = null;
 		foreach (PrettyPolyMeshLayer meshLayer in meshLayers) {
-			if (sprite != null && meshLayer.sprite != null && sprite != meshLayer.sprite) {
+			if (meshLayer.sprite == null || 
+				(sprite != null && meshLayer.sprite != null && sprite != meshLayer.sprite)) {
 				return;
 			}
 			sprite = meshLayer.sprite;
 		}
 
 		if (sprite == null) return;
-		props.AddTexture("_MainTex", meshLayers[0].sprite.texture);
+		props.AddTexture("_MainTex", sprite.texture);
 		renderer.SetPropertyBlock(props);
 	}
 
