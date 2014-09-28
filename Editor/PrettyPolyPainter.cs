@@ -25,7 +25,7 @@ using Paraphernalia.Extensions;
 namespace PrettyPoly {
 public class PrettyPolyPainter : EditorWindow {
 	
-	public static GameObject prefab;
+	
 	public static float spacing = 4;
 	public static float maxAng = 10;
 	
@@ -53,10 +53,39 @@ public class PrettyPolyPainter : EditorWindow {
 		}
 	}
 
+	static int selectedPrefab = 0;
+	static string[] prefabPaths {
+		get {
+			return System.Array.ConvertAll(
+				AssetDatabase.FindAssets("t:Prefab l:PrettyPoly"),
+				guid => AssetDatabase.GUIDToAssetPath(guid)
+			);
+		}
+	}
+
+	static string[] prefabNames {
+		get {
+			return System.Array.ConvertAll(
+				prefabPaths,
+				path => System.IO.Path.GetFileNameWithoutExtension(path)
+			);
+		}
+	}
+	
+	static GameObject prefab {
+		get {
+			if (prefabPaths.Length > 0) {
+				return AssetDatabase.LoadAssetAtPath(prefabPaths[selectedPrefab], typeof(GameObject)) as GameObject;
+			}
+			return null;
+		}
+	}
+
+
 	[MenuItem ("Window/PrettyPoly Painter")]
 	static void Create () {
 		window.minSize = new Vector2(250, 360);
-		window.name = "PrettyPoly";
+		window.title = "PrettyPoly Painter";
 	}
 
     void Update () {
@@ -85,6 +114,8 @@ public class PrettyPolyPainter : EditorWindow {
 	}
 
 	void CreatePoly () {
+		if (currentPoints.Count < 2) return;
+
 		GameObject go;
 		PrettyPoly p;
 		if (prefab == null) {
@@ -146,7 +177,7 @@ public class PrettyPolyPainter : EditorWindow {
 	}
 
 	void OnGUI () {
-		prefab = EditorGUILayout.ObjectField("PrettyPoly Prefab", prefab, typeof(GameObject), false) as GameObject;
+		selectedPrefab = EditorGUILayout.Popup("PrettyPoly Prefab", selectedPrefab, prefabNames);
 		if (prefab == null) {
 			EditorGUILayout.HelpBox("Prefab required", MessageType.Info, true);
 			if (isPainting) {

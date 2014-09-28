@@ -67,6 +67,7 @@ public class PrettyPolyEditor : Editor {
 		Selection.activeGameObject = go;
 
 		PrettyPoly p = go.AddComponent<PrettyPoly>();
+		UpdateLabels(p);
 		p.points = new PrettyPolyPoint[] {
 			new PrettyPolyPoint(new Vector3(-1,-1,0)), 
 			new PrettyPolyPoint(new Vector3(1,-1,0)),
@@ -84,6 +85,7 @@ public class PrettyPolyEditor : Editor {
 	public override void OnInspectorGUI() {
 		EditorUtility.SetSelectedWireframeHidden(prettyPoly.renderer, true);
 		DrawDefaultInspector();
+		UpdateLabels();
 
 		if (GUILayout.Button("Update Mesh")) {
 			if (target != null) prettyPoly.UpdateMesh();
@@ -108,6 +110,21 @@ public class PrettyPolyEditor : Editor {
 			prettyPoly.UpdateMesh();
 			EditorUtility.SetDirty(target);
 		}
+	}
+
+	void UpdateLabels () {
+		if (target != null) UpdateLabels(prettyPoly);
+		else {
+			foreach (PrettyPoly p in prettyPolys) {
+				UpdateLabels(p);
+			}
+		}
+	}
+
+	static void UpdateLabels (PrettyPoly poly) {
+		List<string> labels = new List<string>(AssetDatabase.GetLabels(poly.gameObject));
+		if (!labels.Contains("PrettyPoly")) labels.Add("PrettyPoly");
+		AssetDatabase.SetLabels(poly.gameObject, labels.ToArray());
 	}
 
 	void OnSceneGUI() {
