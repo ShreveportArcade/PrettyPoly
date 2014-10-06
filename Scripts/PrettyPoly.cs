@@ -279,6 +279,9 @@ public class PrettyPoly : MonoBehaviour {
 		for (int i = 0; i < objectLayers.Length; i++) {
 			objectLayers[i].UpdateObjects(transform, pts, closed);
 		}
+
+		if (addCollider) AddCollider(pts);
+		else gameObject.DestroyComponent<PolygonCollider2D>();
 	}
 
 	void OnCollisionEnter2D (Collision2D collision) {
