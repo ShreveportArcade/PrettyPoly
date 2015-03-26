@@ -78,12 +78,12 @@ public class PrettyPolyEditor : Editor {
 		p.meshLayers = new PrettyPolyMeshLayer[] {l};
 		p.UpdateMesh();
 
-		go.renderer.materials = new Material[] {new Material(Shader.Find("Sprites/Default"))};
+		go.GetComponent<Renderer>().materials = new Material[] {new Material(Shader.Find("Sprites/Default"))};
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 	}
 
 	public override void OnInspectorGUI() {
-		EditorUtility.SetSelectedWireframeHidden(prettyPoly.renderer, true);
+		EditorUtility.SetSelectedWireframeHidden(prettyPoly.GetComponent<Renderer>(), true);
 		DrawDefaultInspector();
 		UpdateLabels();
 

@@ -60,8 +60,8 @@ public class PrettyPoly : MonoBehaviour {
 
 	public Material[] materials {
 		get {
-			if (Application.isPlaying) return renderer.materials;
-			else return renderer.sharedMaterials;
+			if (Application.isPlaying) return GetComponent<Renderer>().materials;
+			else return GetComponent<Renderer>().sharedMaterials;
 		}
 	}
 
@@ -249,13 +249,13 @@ public class PrettyPoly : MonoBehaviour {
 	}
 
 	public void UpdateRenderer () {
-		renderer.sortingLayerName = sortingLayerName;
-		renderer.sortingOrder = sortingOrder;
+		GetComponent<Renderer>().sortingLayerName = sortingLayerName;
+		GetComponent<Renderer>().sortingOrder = sortingOrder;
 
 		MaterialPropertyBlock props = new MaterialPropertyBlock();
-		renderer.GetPropertyBlock(props);
+		GetComponent<Renderer>().GetPropertyBlock(props);
 		props.Clear();
-		renderer.SetPropertyBlock(props);
+		GetComponent<Renderer>().SetPropertyBlock(props);
 				
 		Sprite sprite = null;
 		foreach (PrettyPolyMeshLayer meshLayer in meshLayers) {
@@ -268,7 +268,7 @@ public class PrettyPoly : MonoBehaviour {
 
 		if (sprite == null) return;
 		props.AddTexture("_MainTex", sprite.texture);
-		renderer.SetPropertyBlock(props);
+		GetComponent<Renderer>().SetPropertyBlock(props);
 	}
 
 	[ContextMenu("Update Objects")]
