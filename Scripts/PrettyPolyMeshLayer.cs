@@ -336,23 +336,27 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		verts.AddRange(new Vector3[] {
 			pos + prevOut * size,
 			pos + bevelOut * size,
+			pos,
+			pos + bevelOut * size,
 			pos + outward * size,
-			pos
+			pos,
 		});
 
 		Vector2[] quadUVs = GetSpriteUVs();
 		if (flipUVs) quadUVs.Reverse();
-		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[0], quadUVs[3]});
+		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[3], quadUVs[0], quadUVs[1], quadUVs[2]});
 
-		colors.AddRange(new Color[] {c, c, c, c});
-		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
+		colors.AddRange(new Color[] {c, c, c, c, c, c});
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
 
-		Vector4 tan = (Vector4)outward;
-		tan.w = 1;
-		tans.AddRange(new Vector4[] {tan, tan, tan, tan});
+		Vector4 tan1 = (Vector4)prevOut;
+		Vector4 tan2 = (Vector4)outward;
+		tan1.w = 1;
+		tan2.w = 1;
+		tans.AddRange(new Vector4[] {tan1, tan1, tan1, tan2, tan2, tan2});
 
-		tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
-		index += 4;
+		tris.AddRange(new int[] {index, index+1, index+2, index+3, index+4, index+5});
+		index += 6;
 	}
 
 	public void AddSolidEdgeSegment (Vector3 a, Vector3 b, Vector3 outward, float size, Color c, ref int index, ref float uvFrac) {
