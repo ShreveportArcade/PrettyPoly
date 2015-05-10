@@ -135,7 +135,7 @@ public class PrettyPolyPainter : EditorWindow {
 		float len = points.PathLength(closed);
 		points = points.Resample((int)(len / spacing), closed);
 		points = points.RemoveColinear(maxAng, closed);
-		Vector3 center = points.Center();
+		Vector3 center = points.Average();
 		go.transform.position = center;
 		points = points.MoveBy(-center);
 		p.points = System.Array.ConvertAll(points, point => new PrettyPolyPoint(point));
