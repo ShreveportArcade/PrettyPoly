@@ -229,34 +229,36 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
 				Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
 				
-				if (prevOutExists && currCavity < 0) {
-					switch (outerJoinType) {
-						case JoinType.Miter:
-							AddSolidEdgeMiterJoin(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
-							break;
-						case JoinType.Bevel:
-							AddSolidEdgeBevelJoin(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
-							break;
-						case JoinType.Rounded:
-							float rot = Vector3.Angle(prevOut, currOut);
-							AddSolidEdgeRoundedJoin(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
-							break;
+				if (prevOutExists) {
+					if (currCavity < 0) {
+						switch (outerJoinType) {
+							case JoinType.Miter:
+								AddSolidEdgeMiterJoin(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
+								break;
+							case JoinType.Bevel:
+								AddSolidEdgeBevelJoin(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
+								break;
+							case JoinType.Rounded:
+								float rot = Vector3.Angle(prevOut, currOut);
+								AddSolidEdgeRoundedJoin(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
+								break;
+						}
 					}
-				}
-				if (prevOutExists && currCavity > 0) {
-					a = curr + (abIntersect - currOut) * size;
-					Vector3 pivot = curr + abIntersect * size;
-					switch (innerJoinType) {
-						case JoinType.Miter:
-							AddSolidEdgeMiterJoin(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
-							break;
-						case JoinType.Bevel:
-							AddSolidEdgeBevelJoin(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
-							break;
-						case JoinType.Rounded:
-							float rot = Vector3.Angle(prevOut, currOut);
-							AddSolidEdgeRoundedJoin(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
-							break;
+					else {
+						a = curr + (abIntersect - currOut) * size;
+						Vector3 pivot = curr + abIntersect * size;
+						switch (innerJoinType) {
+							case JoinType.Miter:
+								AddSolidEdgeMiterJoin(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
+								break;
+							case JoinType.Bevel:
+								AddSolidEdgeBevelJoin(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
+								break;
+							case JoinType.Rounded:
+								float rot = Vector3.Angle(prevOut, currOut);
+								AddSolidEdgeRoundedJoin(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
+								break;
+						}
 					}
 				}
 
@@ -514,6 +516,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Polygon poly = new Polygon(points);
 		Bounds b = points.GetBounds();
 		float s = size * 2 * spacing;
+		
+		if (allowOverflow) {
+			poly = poly.GetOffset(2 * s);
+			b.Expand(s);
+		}
+		
 		int index = 0;
 		for (float x = b.min.x; x < b.max.x; x += s) {
 			for (float y = b.min.y; y < b.max.y; y += s) {

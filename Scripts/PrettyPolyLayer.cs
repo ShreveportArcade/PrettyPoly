@@ -59,6 +59,9 @@ public class PrettyPolyLayer {
 	
 	[Tooltip("How often objects in scatter layers should be placed.")]
     [Range(0,1)] public float placementFrequency = 1;
+
+    [Tooltip("If false, ScatterFill rejects tiles with at least 1 vertex out of bounds; otherwise, all verts must be out of bounds to be rejected.")]
+    public bool allowOverflow = false;
 	
 	[Space(10)]
 	[Header("Rotation Settings")]
