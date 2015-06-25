@@ -138,7 +138,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		Clear();
 		
 		float pathLength = positions.PathLength(closed);
-		if (winding < 0) positions = positions.Reverse();
+		if (winding < 0) {
+			positions = positions.Reverse();
+		}
+		else {
+			positions = positions.Shift(-2);
+		}
 				
 		switch (layerType) {
 			case (LayerType.ScatterEdge):
