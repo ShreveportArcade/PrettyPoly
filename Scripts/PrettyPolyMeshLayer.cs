@@ -281,8 +281,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		if (segments == 0) return;
 		
 		Vector2[] quadUVs = GetSpriteUVs();
-		if (flipUVs) quadUVs.Reverse();
 		Vector4 tan = (Vector4)prevOut;
+		if (flipUVs) {
+			quadUVs.Reverse();
+			tan = -tan;
+		}
 		tan.w = 1;
 		tans.AddRange(new Vector4[] {tan, tan});
 		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward});
@@ -300,6 +303,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			colors.Add(c);
 			norms.Add(-Vector3.forward);
 			tan = (Vector4)prevOut;
+			if (flipUVs) tan = -tan;
 			tan.w = 1;
 			tans.Add(tan);
 			tris.AddRange(new int[] {index+i, index+i+1, index});
@@ -310,6 +314,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		colors.Add(c);
 		norms.Add(-Vector3.forward);
 		tan = (Vector4)outward;
+		if (flipUVs) tan = -tan;
 		tan.w = 1;
 		tans.Add(tan);
 		tris.AddRange(new int[] {index+segments, index+segments+1, index});
@@ -325,17 +330,21 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		});
 
 		Vector2[] quadUVs = GetSpriteUVs();
-		if (flipUVs) quadUVs.Reverse();
-		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], (quadUVs[2] + quadUVs[3]) * 0.5f});
+		Vector4 tan = (Vector4)outward;
+		int[] triArray = new int[] {index, index+1, index+2};
 
+		if (flipUVs) {
+			tan = -tan;
+			quadUVs.Reverse();
+			triArray.Reverse();
+		}
+		tan.w = 1;
+		
+		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], (quadUVs[2] + quadUVs[3]) * 0.5f});
 		colors.AddRange(new Color[] {c, c, c});
 		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward});
-
-		Vector4 tan = (Vector4)outward;
-		tan.w = 1;
 		tans.AddRange(new Vector4[] {tan, tan, tan});
-
-		tris.AddRange(new int[] {index, index+1, index+2});
+		tris.AddRange(triArray);
 		index += 3;
 	}
 
@@ -350,19 +359,24 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		});
 
 		Vector2[] quadUVs = GetSpriteUVs();
-		if (flipUVs) quadUVs.Reverse();
-		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[3], quadUVs[0], quadUVs[1], quadUVs[2]});
-
-		colors.AddRange(new Color[] {c, c, c, c, c, c});
-		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
-
 		Vector4 tan1 = (Vector4)prevOut;
 		Vector4 tan2 = (Vector4)outward;
+		int[] triArray = new int[] {index, index+1, index+2, index+3, index+4, index+5};
+		
+		if (flipUVs) {
+			quadUVs.Reverse();
+			triArray.Reverse();
+			tan1 = -tan1;
+			tan2 = -tan2;
+		}
 		tan1.w = 1;
 		tan2.w = 1;
+		
+		uvs.AddRange(new Vector2[] {quadUVs[0], quadUVs[1], quadUVs[3], quadUVs[0], quadUVs[1], quadUVs[2]});
+		colors.AddRange(new Color[] {c, c, c, c, c, c});
+		norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
 		tans.AddRange(new Vector4[] {tan1, tan1, tan1, tan2, tan2, tan2});
-
-		tris.AddRange(new int[] {index, index+1, index+2, index+3, index+4, index+5});
+		tris.AddRange(triArray);
 		index += 6;
 	}
 
