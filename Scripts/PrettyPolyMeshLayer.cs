@@ -142,7 +142,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			positions = positions.Reverse();
 		}
 		else {
-			positions = positions.Shift(-2);
+			positions = positions.Shift(2);
 		}
 				
 		switch (layerType) {
@@ -234,7 +234,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 				Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
 				Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
 				
-				if (prevOutExists) {
+				if (prevOutExists && (closed || i != 1)) {
 					if (currCavity < 0) {
 						switch (outerJoinType) {
 							case JoinType.Miter:
@@ -271,7 +271,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					b = next + (bcIntersect - currOut) * size;
 				}
 				
-				AddSolidEdgeSegment(a, b, currOut, size, c, ref index, ref uvFrac);
+				if (closed || i != segments-1) {
+					AddSolidEdgeSegment(a, b, currOut, size, c, ref index, ref uvFrac);
+				}
+				else {
+					AddSolidEdgeSegment(a, points[(i+1)%points.Length], currOut, size, c, ref index, ref uvFrac);
+				}
 			}
 		}
 	}
