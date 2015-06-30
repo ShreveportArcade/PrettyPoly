@@ -18,15 +18,20 @@ Shader "PrettyPoly/Lit Hue Shift" {
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
 		_BumpTex ("Normal Map", 2D) = "bump" {}
-		_Cutoff ("Cutoff", Range(0,1)) = 0.5
 		_HSV ("Hue Shift, Saturation, Value, Alpha", Vector) = (0.5,0.5,0.5,1)
 	}
 	SubShader {
-		Tags { "Queue"="AlphaTest" "RenderType"="TransparentCutout" }
+		Tags { 
+			"Queue"="Transparent" 
+			"RenderType"="Transparent" 
+			"CanUseSpriteAtlas"="True"
+		}
 		LOD 200
-		
+		ZWrite Off
+		Blend SrcAlpha OneMinusSrcAlpha
+
 		CGPROGRAM
-		#pragma surface surf Lambert
+		#pragma surface surf Lambert alpha
 
 		sampler2D _MainTex;
 		sampler2D _BumpTex;
@@ -56,9 +61,8 @@ Shader "PrettyPoly/Lit Hue Shift" {
            			   (0.114 * _HSV.z + 0.886 * VSU - 0.203 * VSW) * c.z),
            			  c.a);
 
-			o.Albedo = c.rgb;
+			o.Albedo = c.rgb * c.a;
 			o.Alpha = c.a;
-			clip (o.Alpha - _Cutoff);
 		}
 		ENDCG
 	} 
