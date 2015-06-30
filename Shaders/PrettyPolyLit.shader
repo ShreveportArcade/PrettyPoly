@@ -26,6 +26,7 @@ Shader "PrettyPoly/Lit" {
 			"CanUseSpriteAtlas"="True"
 		}
 		LOD 200
+		Cull Off
 		ZWrite Off
 		Blend SrcAlpha OneMinusSrcAlpha
 
