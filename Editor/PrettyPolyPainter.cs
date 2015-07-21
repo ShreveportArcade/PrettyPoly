@@ -85,7 +85,7 @@ public class PrettyPolyPainter : EditorWindow {
 	[MenuItem ("Window/PrettyPoly Painter")]
 	static void Create () {
 		window.minSize = new Vector2(250, 360);
-		window.title = "PrettyPoly Painter";
+		window.titleContent = new GUIContent("PrettyPoly Painter");
 	}
 
     void Update () {
