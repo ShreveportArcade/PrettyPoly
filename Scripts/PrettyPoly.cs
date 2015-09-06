@@ -154,6 +154,7 @@ public class PrettyPoly : MonoBehaviour {
 		if (len <= 2) return points;
 		List<PrettyPolyPoint> newPoints = new List<PrettyPolyPoint>();
 		for (int i = 0; i < len; i++) {
+			if (!closed && i == len - 1) continue;
 			PrettyPolyPoint start = points[i];
 			PrettyPolyPoint end = points[(i + 1) % len];
 			Vector3 cp1 = start.position + start.outTangent;

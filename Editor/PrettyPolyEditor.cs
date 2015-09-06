@@ -60,7 +60,7 @@ public class PrettyPolyEditor : Editor {
 
 	[MenuItem("GameObject/2D Object/PrettyPoly")]
 	static void CreatePrettyPoly () {
-		Camera sceneCam = SceneView.currentDrawingSceneView.camera;
+		Camera sceneCam = SceneView.lastActiveSceneView.camera;
         Vector3 spawnPos = sceneCam.ViewportToWorldPoint(new Vector3(0.5f,0.5f,10f));
 		GameObject go = new GameObject("PrettyPoly");
 		go.transform.position = spawnPos;
