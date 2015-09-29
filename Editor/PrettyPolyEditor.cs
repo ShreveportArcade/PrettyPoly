@@ -89,7 +89,7 @@ public class PrettyPolyEditor : Editor {
 
 		if (GUILayout.Button("Update Mesh")) {
 			if (target != null) prettyPoly.UpdateMesh();
-			else {
+			if (prettyPolys != null) {
 				foreach (PrettyPoly p in prettyPolys) {
 					p.UpdateMesh();
 				}
@@ -98,7 +98,7 @@ public class PrettyPolyEditor : Editor {
 
 		if (GUILayout.Button("Update Objects")) {
 			if (target != null) prettyPoly.UpdateObjects();
-			else {
+			if (prettyPolys != null) {
 				foreach (PrettyPoly p in prettyPolys) {
 					p.UpdateMesh();
 				}

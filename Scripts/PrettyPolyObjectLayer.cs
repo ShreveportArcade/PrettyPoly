@@ -30,6 +30,8 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	[Header("Object Settings")]
 	[Tooltip("The prefab to be scattered.")]
     public Object prefab;
+    [SortingLayer] public string sortingLayerName = "Default";
+	public int sortingOrder = 0;
 
 	public void UpdateObjects (Transform root, PrettyPolyPoint[] points, bool closed) {
 		if (prefab == null || points.Length < 2) return;
@@ -50,7 +52,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	}
 
 	public void AddStroke (Transform root, Vector3[] points, float pathLength, bool closed) {
-		int segments = points.Length + (closed?1:0);
+		int segments = points.Length + (closed?0:-1);
 		int index = 0;
 		float distTraveled = 0;
 		for (int i = 1; i < segments; i++) {
@@ -115,7 +117,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 			g = prefab.Instantiate() as GameObject;
 			g.transform.parent = root;
 		}
-		g.SetStatic(g.transform.parent.gameObject.GetStatic());
+		if (g.transform.parent != null) g.SetStatic(g.transform.parent.gameObject.GetStatic());
 		g.transform.localPosition = p;
 		g.transform.localRotation = Quaternion.AngleAxis(
 			Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg, Vector3.forward);
@@ -123,6 +125,8 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		SpriteRenderer spriteRenderer = g.GetComponent<SpriteRenderer>();
 		if (spriteRenderer) {
 			spriteRenderer.color = GetShiftedColor(color, t);
+			spriteRenderer.sortingLayerName = sortingLayerName;
+			spriteRenderer.sortingOrder = sortingOrder;
 		}
 
 		index++;

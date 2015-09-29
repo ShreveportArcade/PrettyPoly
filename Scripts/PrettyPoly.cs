@@ -192,6 +192,9 @@ public class PrettyPoly : MonoBehaviour {
 
 	[ContextMenu("Update Mesh")]
 	public void UpdateMesh () {
+		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
+		if (addCollider) AddCollider(pts);
+		else gameObject.DestroyComponent<PolygonCollider2D>();
 		if (meshLayers == null || meshLayers.Length == 0) {
 			mesh.Clear();
 			return;
@@ -212,7 +215,6 @@ public class PrettyPoly : MonoBehaviour {
 			tris.Add(new List<int>());
 		}
 		
-		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
 		float winding = 0;
 		if (closed) {
 			winding = System.Array.ConvertAll(pts, point => point.position).ClosedWinding();
@@ -248,33 +250,12 @@ public class PrettyPoly : MonoBehaviour {
 		if (Application.isPlaying) GetComponent<MeshFilter>().mesh = mesh;
 		else GetComponent<MeshFilter>().sharedMesh = mesh;
 
-		if (addCollider) AddCollider(pts);
-		else gameObject.DestroyComponent<PolygonCollider2D>();
-
 		UpdateRenderer();
 	}
 
 	public void UpdateRenderer () {
 		GetComponent<Renderer>().sortingLayerName = sortingLayerName;
 		GetComponent<Renderer>().sortingOrder = sortingOrder;
-
-		MaterialPropertyBlock props = new MaterialPropertyBlock();
-		GetComponent<Renderer>().GetPropertyBlock(props);
-		props.Clear();
-		GetComponent<Renderer>().SetPropertyBlock(props);
-				
-		Sprite sprite = null;
-		foreach (PrettyPolyMeshLayer meshLayer in meshLayers) {
-			if (meshLayer.sprite == null || 
-				(sprite != null && meshLayer.sprite != null && sprite != meshLayer.sprite)) {
-				return;
-			}
-			sprite = meshLayer.sprite;
-		}
-
-		if (sprite == null) return;
-		props.AddTexture("_MainTex", sprite.texture);
-		GetComponent<Renderer>().SetPropertyBlock(props);
 	}
 
 	[ContextMenu("Update Objects")]
