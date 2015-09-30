@@ -52,7 +52,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	}
 
 	public void AddStroke (Transform root, Vector3[] points, float pathLength, bool closed) {
-		int segments = points.Length + (closed?0:-1);
+		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
 		for (int i = 1; i < segments; i++) {
