@@ -150,7 +150,8 @@ public class PrettyPolyLayer {
 
 	public bool ExistsInDirection (Vector2 dir) {
 		float dev = -Vector3.Dot(dir, naturalDirection);
-		return (dev <= 1 - angularPlacementRange * 2);
+		float range = 1 - angularPlacementRange * 2;
+		return (dev <= range);
 	}
 
 	public float GetSize (float t) {

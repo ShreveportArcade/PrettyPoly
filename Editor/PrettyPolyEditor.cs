@@ -163,7 +163,7 @@ public class PrettyPolyEditor : Editor {
 				GUI.SetNextControlName("pretty poly point " + i);
 				if (i == 0) Handles.color = Color.magenta;
 				if (i == 1) Handles.color = Color.green;
-				float size =GetHandleSize(point.position, 1);
+				float size = GetHandleSize(point.position, 1);
 				point.position = Handles.FreeMoveHandle(
 					point.position, 
 					Quaternion.identity, 
@@ -254,7 +254,7 @@ public class PrettyPolyEditor : Editor {
     }
 
     float GetHandleSize (Vector3 pos, float size) {
-    	return Mathf.Min(HandleUtility.GetHandleSize(pos), 0.5f) * size * handleScale;
+    	return HandleUtility.GetHandleSize(pos) * size * handleScale;
     }
 }
 }
