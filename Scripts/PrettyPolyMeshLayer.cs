@@ -30,7 +30,15 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	[Header("Mesh Settings")]
 	
 	[Tooltip("If multiple sprites are used, they must come from a texture atlas.")]
-    public Sprite sprite;
+    public Sprite[] sprites = new Sprite[]{};
+    public AnimationCurve spriteDistributionCurve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
+    private int spriteIndex = 0;
+    private Sprite sprite {
+    	get {
+    		if (spriteIndex >= sprites.Length) return null;
+    		return sprites[spriteIndex];
+    	}
+    }
 	
 	[Tooltip("Material used to render the sprite.")]
     [MaterialIndex] public int materialIndex = 0;
@@ -88,6 +96,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		colors.Clear();
 		norms.Clear();
 		tans.Clear();
+	}
+
+	public void RandomizeSprite () {
+		float rand = spriteDistributionCurve.Evaluate(Random.value);
+		spriteIndex = (int)Mathf.Round(Mathf.Lerp(0, sprites.Length - 1, rand));
 	}
 
 	public Vector2[] GetSpriteUVs () {
@@ -226,6 +239,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 			Color c = GetShiftedColor(color, t);
 
 			if (currOutExists) {
+				RandomizeSprite();
 				Vector3 a = curr;
 				Vector3 b = next;
 				Line2D lineA = new Line2D(prevOut, prevOut + currDir);
@@ -271,6 +285,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 					b = next + (bcIntersect - currOut) * size;
 				}
 				
+				RandomizeSprite();
 				if (closed || i != segments-1) {
 					AddSolidEdgeSegment(a, b, currOut, size, c, ref index, ref uvFrac);
 				}
@@ -464,7 +479,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		if (placementFrequency < Random.value) return;
 
 		Random.seed = index + seed;
-
+		RandomizeSprite();
 		dir = GetDirection(dir, index, t);
 		Vector3 right = Vector3.Cross(dir, -Vector3.forward);
 		Vector3 up = Vector3.Cross(-Vector3.forward, right);
