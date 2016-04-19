@@ -247,6 +247,7 @@ public class PrettyPoly : MonoBehaviour {
 			mesh.SetTriangles(tris[i].ToArray(), i);
 		}		
 
+		mesh.RecalculateBounds();
 		if (Application.isPlaying) GetComponent<MeshFilter>().mesh = mesh;
 		else GetComponent<MeshFilter>().sharedMesh = mesh;
 
