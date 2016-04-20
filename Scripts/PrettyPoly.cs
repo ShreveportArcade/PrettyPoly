@@ -215,16 +215,12 @@ public class PrettyPoly : MonoBehaviour {
 			tris.Add(new List<int>());
 		}
 		
-		float winding = 0;
-		if (closed) {
-			winding = System.Array.ConvertAll(pts, point => point.position).ClosedWinding();
-		}
-		else {
-			winding = System.Array.ConvertAll(pts, point => point.position).Winding();
-		}
+		Vector3[] positions = System.Array.ConvertAll(pts, point => point.position);
+		float winding = closed ? positions.ClosedWinding() : positions.Winding();
+		pts = (winding < 0) ? pts.Reverse() : pts.Shift(2);
 
 		for (int i = 0; i < meshLayers.Length; i++) {
-			Mesh m = sortedLayers[i].GetMesh(pts, closed, winding);
+			Mesh m = sortedLayers[i].GetMesh(pts, closed);
 			if (m == null) continue;
 			tris[sortedLayers[i].materialIndex].AddRange(
 				System.Array.ConvertAll(m.triangles, t => t + verts.Count)
@@ -264,6 +260,10 @@ public class PrettyPoly : MonoBehaviour {
 		if (objectLayers == null || objectLayers.Length == 0) return;
 
 		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
+		// Vector3[] positions = System.Array.ConvertAll(pts, point => point.position);
+		// float winding = closed ? positions.ClosedWinding() : positions.Winding();
+		pts = pts.Shift(1);
+
 		for (int i = 0; i < objectLayers.Length; i++) {
 			objectLayers[i].UpdateObjects(transform, pts, closed);
 		}

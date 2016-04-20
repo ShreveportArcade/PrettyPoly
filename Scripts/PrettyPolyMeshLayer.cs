@@ -144,19 +144,13 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		return sprite.textureRect.width / sprite.textureRect.height;
 	}
 
-	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed, float winding) {
+	public Mesh GetMesh (PrettyPolyPoint[] points, bool closed) {
 		FixParams();
 		Vector3[] positions = GetOffset(points);
 		if (positions.Length < 2) return null;
 		Clear();
 		
 		float pathLength = positions.PathLength(closed);
-		if (winding < 0) {
-			positions = positions.Reverse();
-		}
-		else {
-			positions = positions.Shift(2);
-		}
 				
 		switch (layerType) {
 			case (LayerType.ScatterEdge):
