@@ -260,8 +260,6 @@ public class PrettyPoly : MonoBehaviour {
 		if (objectLayers == null || objectLayers.Length == 0) return;
 
 		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
-		// Vector3[] positions = System.Array.ConvertAll(pts, point => point.position);
-		// float winding = closed ? positions.ClosedWinding() : positions.Winding();
 		pts = pts.Shift(1);
 
 		for (int i = 0; i < objectLayers.Length; i++) {
