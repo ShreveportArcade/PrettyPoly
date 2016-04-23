@@ -27,6 +27,7 @@ Shader "PrettyPoly/Lit Vertex Color is HSV" {
 		}
 		LOD 200
 		ZWrite Off
+		Cull off
 		Blend SrcAlpha OneMinusSrcAlpha
 
 		CGPROGRAM

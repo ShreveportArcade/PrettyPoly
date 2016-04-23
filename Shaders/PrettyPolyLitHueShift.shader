@@ -28,6 +28,7 @@ Shader "PrettyPoly/Lit Hue Shift" {
 		}
 		LOD 200
 		ZWrite Off
+		Cull off
 		Blend SrcAlpha OneMinusSrcAlpha
 
 		CGPROGRAM
