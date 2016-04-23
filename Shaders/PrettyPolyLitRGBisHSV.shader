@@ -14,7 +14,7 @@
 // CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-Shader "PrettyPoly/Lit Hue Shift" {
+Shader "PrettyPoly/Vertex Color is HSV (lit)" {
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
 		_BumpTex ("Normal Map", 2D) = "bump" {}
@@ -46,8 +46,8 @@ Shader "PrettyPoly/Lit Hue Shift" {
 			o.Normal = UnpackNormal(tex2D(_BumpTex, IN.uv_MainTex));
  
  			float4 hsv = IN.color;
-			float VSU = hsv.z * hsv.y * cos(hsv.x * 3.14159265 / 180);
-			float VSW = hsv.z * hsv.y * sin(hsv.x * 3.14159265 / 180);
+			float VSU = hsv.z * hsv.y * cos(hsv.x * 2 * 3.14159265);
+			float VSW = hsv.z * hsv.y * sin(hsv.x * 2 * 3.14159265);
  
             c = half4(((0.299 * hsv.z + 0.701 * VSU + 0.168 * VSW) * c.x + 
             		   (0.587 * hsv.z - 0.587 * VSU + 0.330 * VSW) * c.y + 
