@@ -31,6 +31,10 @@ public class PrettyPolyMeshLayerEditor : Editor {
 		if (GUI.changed) {
 			EditorUtility.SetDirty(target);
 			foreach (PrettyPoly p in prettyPolys) {
+				if (p == null) {
+					_prettyPolys = null;
+					break;
+				}
 				EditorUtility.SetDirty(p);
 				p.UpdateMesh();
 			}

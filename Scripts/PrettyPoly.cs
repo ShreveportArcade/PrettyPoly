@@ -220,7 +220,9 @@ public class PrettyPoly : MonoBehaviour {
 		pts = (winding < 0) ? pts.Reverse() : pts.Shift(2);
 
 		for (int i = 0; i < meshLayers.Length; i++) {
-			Mesh m = sortedLayers[i].GetMesh(pts, closed);
+			PrettyPolyMeshLayer layer = sortedLayers[i];
+			if (layer == null) continue;
+			Mesh m = layer.GetMesh(pts, closed);
 			if (m == null) continue;
 			tris[sortedLayers[i].materialIndex].AddRange(
 				System.Array.ConvertAll(m.triangles, t => t + verts.Count)
@@ -263,6 +265,7 @@ public class PrettyPoly : MonoBehaviour {
 		pts = pts.Shift(1);
 
 		for (int i = 0; i < objectLayers.Length; i++) {
+			if (objectLayers[i] == null) continue;
 			objectLayers[i].UpdateObjects(transform, pts, closed);
 		}
 
@@ -275,7 +278,7 @@ public class PrettyPoly : MonoBehaviour {
 
 		for (int i = 0; i < meshLayers.Length; i++) { 
 			PrettyPolyMeshLayer layer = meshLayers[i];
-			if (layer.isTrigger && layer.ExistsInDirection(norm)) {
+			if (layer != null && layer.isTrigger && layer.ExistsInDirection(norm)) {
 				onCollision2D(collision, layer);
 			}
 		}
