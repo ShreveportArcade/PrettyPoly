@@ -39,9 +39,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
     		return sprites[spriteIndex];
     	}
     }
+
+    [Tooltip("Sort Order")]
+    public int sortOrder = 0;
 	
 	[Tooltip("Material used to render the sprite.")]
-    [MaterialIndex] public int materialIndex = 0;
+    public int materialIndex = 0; // TODO: Remove in favor of using materials directly
 
     [Tooltip("Used for tiling solid fills.")]
     public float minTileSize = 100;

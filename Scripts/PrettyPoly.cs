@@ -45,8 +45,8 @@ public class PrettyPoly : MonoBehaviour {
 	}
 	public CurveType curveType = CurveType.CatmullRom;
 	
-	[Array] public PrettyPolyMeshLayer[] meshLayers;	
-	[Array] public PrettyPolyObjectLayer[] objectLayers;	
+	public PrettyPolyMeshLayer[] meshLayers;	
+	public PrettyPolyObjectLayer[] objectLayers;	
 
 	private Mesh _mesh;
 	public Mesh mesh {
@@ -201,7 +201,7 @@ public class PrettyPoly : MonoBehaviour {
 		}
 
 		List<PrettyPolyMeshLayer> sortedLayers = new List<PrettyPolyMeshLayer>(meshLayers);
-		sortedLayers.Sort((a,b) => b.posOffset.z.CompareTo(a.posOffset.z));
+		sortedLayers.Sort((a,b) => a.sortOrder.CompareTo(b.sortOrder));
 		
 		mesh.Clear();
 		List<Vector3> verts = new List<Vector3>();

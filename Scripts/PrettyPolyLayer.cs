@@ -23,8 +23,7 @@ using Paraphernalia.Utils;
 using Paraphernalia.Math;
 
 namespace PrettyPoly {
-[System.Serializable]
-public class PrettyPolyLayer {
+public class PrettyPolyLayer : ScriptableObject {
 
 	[Tooltip("Used in collision callbacks.")]
     public string name = "New Layer";
@@ -110,16 +109,6 @@ public class PrettyPolyLayer {
 
 	[Tooltip("Amount to randomly offset the alpha.")]
     [Range(0,1)] public float alphaVariation;
-	
-	public PrettyPolyLayer () {
-		name = "New Layer";
-		spacing = 1;
-		placementFrequency = 1;
-		followPath = true;
-		size = 1;
-		color = Color.white;
-		layerType = LayerType.SolidFill;
-	}
 
 	public Vector3 naturalDirection {
 		get { 

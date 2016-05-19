@@ -100,7 +100,7 @@ public class PrettyPolyEditor : Editor {
 			if (target != null) prettyPoly.UpdateObjects();
 			if (prettyPolys != null) {
 				foreach (PrettyPoly p in prettyPolys) {
-					p.UpdateMesh();
+					p.UpdateObjects();
 				}
 			}
 		}
