@@ -74,11 +74,6 @@ public class PrettyPolyEditor : Editor {
 			new PrettyPolyPoint(new Vector3(0,1,0))
 		};
 		p.closed = true;
-		PrettyPolyMeshLayer l = new PrettyPolyMeshLayer();
-		p.meshLayers = new PrettyPolyMeshLayer[] {l};
-		p.UpdateMesh();
-
-		go.GetComponent<Renderer>().materials = new Material[] {new Material(Shader.Find("Sprites/Default"))};
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 	}
 
@@ -87,7 +82,16 @@ public class PrettyPolyEditor : Editor {
 		DrawDefaultInspector();
 		UpdateLabels();
 
-		if (GUILayout.Button("Update Mesh")) {
+		if (GUILayout.Button("Update Materials")) {
+			if (target != null) prettyPoly.UpdateObjects();
+			if (prettyPolys != null) {
+				foreach (PrettyPoly p in prettyPolys) {
+					p.UpdateMaterials();
+				}
+			}
+		}
+
+		if (GUILayout.Button("Update Meshes")) {
 			if (target != null) prettyPoly.UpdateMesh();
 			if (prettyPolys != null) {
 				foreach (PrettyPoly p in prettyPolys) {
@@ -107,6 +111,7 @@ public class PrettyPolyEditor : Editor {
 
 		if (GUI.changed) {
 			prettyPoly.UpdateObjects();
+			prettyPoly.UpdateMaterials();
 			prettyPoly.UpdateMesh();
 			EditorUtility.SetDirty(target);
 		}

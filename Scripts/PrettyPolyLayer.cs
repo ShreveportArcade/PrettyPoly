@@ -25,9 +25,6 @@ using Paraphernalia.Math;
 namespace PrettyPoly {
 public class PrettyPolyLayer : ScriptableObject {
 
-	[Tooltip("Used in collision callbacks.")]
-    public string name = "New Layer";
-
 	public enum LayerType {
 		ScatterEdge,
 		SolidEdge,

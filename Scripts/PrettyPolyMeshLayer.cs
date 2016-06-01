@@ -45,6 +45,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	
 	[Tooltip("Material used to render the sprite.")]
     public int materialIndex = 0; // TODO: Remove in favor of using materials directly
+    public Material material;
 
     [Tooltip("Used for tiling solid fills.")]
     public float minTileSize = 100;

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace PrettyPoly {
+[CanEditMultipleObjects]
 [CustomEditor(typeof(PrettyPolyObjectLayer))]
 public class PrettyPolyObjectLayerEditor : Editor {
 

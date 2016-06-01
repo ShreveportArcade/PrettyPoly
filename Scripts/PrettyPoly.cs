@@ -45,7 +45,17 @@ public class PrettyPoly : MonoBehaviour {
 	}
 	public CurveType curveType = CurveType.CatmullRom;
 	
-	public PrettyPolyMeshLayer[] meshLayers;	
+	public PrettyPolyMeshLayer[] meshLayers;
+
+	public List<PrettyPolyMeshLayer> sortedLayers {
+		get {
+			if (meshLayers == null) return null;
+			List<PrettyPolyMeshLayer> _sortedLayers = new List<PrettyPolyMeshLayer>(meshLayers);
+			_sortedLayers.Sort((a,b) => a.sortOrder.CompareTo(b.sortOrder));
+			return _sortedLayers;
+		}
+	}
+
 	public PrettyPolyObjectLayer[] objectLayers;	
 
 	private Mesh _mesh;
@@ -62,6 +72,10 @@ public class PrettyPoly : MonoBehaviour {
 		get {
 			if (Application.isPlaying) return GetComponent<Renderer>().materials;
 			else return GetComponent<Renderer>().sharedMaterials;
+		}
+		set {
+			if (Application.isPlaying) GetComponent<Renderer>().materials = value;
+			else GetComponent<Renderer>().sharedMaterials = value;
 		}
 	}
 
@@ -190,6 +204,18 @@ public class PrettyPoly : MonoBehaviour {
 		}
 	}
 
+	public void UpdateMaterials () {
+		if (sortedLayers == null) return;
+		List<Material> mats = new List<Material>();
+		Material prevMat = null;
+		foreach (PrettyPolyMeshLayer layer in sortedLayers) {
+			Material mat = layer.material;
+			if (mat != prevMat) mats.Add(mat);
+			prevMat = mat;
+		}
+		materials = mats.ToArray();
+	}
+
 	[ContextMenu("Update Mesh")]
 	public void UpdateMesh () {
 		PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
@@ -199,9 +225,6 @@ public class PrettyPoly : MonoBehaviour {
 			mesh.Clear();
 			return;
 		}
-
-		List<PrettyPolyMeshLayer> sortedLayers = new List<PrettyPolyMeshLayer>(meshLayers);
-		sortedLayers.Sort((a,b) => a.sortOrder.CompareTo(b.sortOrder));
 		
 		mesh.Clear();
 		List<Vector3> verts = new List<Vector3>();
@@ -219,12 +242,17 @@ public class PrettyPoly : MonoBehaviour {
 		float winding = closed ? positions.ClosedWinding() : positions.Winding();
 		pts = (winding < 0) ? pts.Reverse() : pts.Shift(2);
 
+		int matIndex = -1;
+		Material prevMat = null;
 		for (int i = 0; i < meshLayers.Length; i++) {
 			PrettyPolyMeshLayer layer = sortedLayers[i];
 			if (layer == null) continue;
 			Mesh m = layer.GetMesh(pts, closed);
 			if (m == null) continue;
-			tris[sortedLayers[i].materialIndex].AddRange(
+			Material mat = layer.material;
+			if (mat != prevMat) matIndex++;
+			prevMat = mat;
+			tris[matIndex].AddRange(
 				System.Array.ConvertAll(m.triangles, t => t + verts.Count)
 			);			
 			verts.AddRange(m.vertices);

@@ -25,7 +25,7 @@ using Paraphernalia.Extensions;
 namespace PrettyPoly {
 public class PrettyPolyPainter : EditorWindow {
 	
-	
+	public static float overlapThreshold = 0.5f;
 	public static float spacing = 4;
 	public static float maxAng = 10;
 	
@@ -129,12 +129,12 @@ public class PrettyPolyPainter : EditorWindow {
 		
 		Vector3[] points = currentPoints.ToArray();
 		float winding = points.Winding();
-		if (winding < 0) points = points.Reverse();
 		bool closed = (Mathf.Abs(winding) > 0.5f);
 		p.closed = closed;
 		float len = points.PathLength(closed);
 		points = points.Resample((int)(len / spacing), closed);
 		points = points.RemoveColinear(maxAng, closed);
+		points = points.RemoveOverlapping(overlapThreshold);
 		Vector3 center = points.Average();
 		go.transform.position = center;
 		points = points.MoveBy(-center);
@@ -195,6 +195,7 @@ public class PrettyPolyPainter : EditorWindow {
 			return;
 		}
 
+		overlapThreshold = EditorGUILayout.FloatField("Overlap Threshold", overlapThreshold);
 		if (!isPainting) {
 			if (GUILayout.Button("Paint")) {
 				StartPainting();
