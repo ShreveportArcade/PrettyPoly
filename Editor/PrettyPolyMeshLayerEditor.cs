@@ -90,7 +90,7 @@ public class PrettyPolyMeshLayerEditor : Editor {
 			EditorUtility.SetDirty(target);
 			EditorUtility.SetDirty(previewPoly.gameObject);
 			foreach (PrettyPoly p in prettyPolys) {
-				if (System.Array.Exists(p.meshLayers, (l) => l != null && prettyPolyMeshLayer != null && l == prettyPolyMeshLayer)) {
+				if (p != null && p.meshLayers != null && System.Array.Exists(p.meshLayers, (l) => l != null && prettyPolyMeshLayer != null && l == prettyPolyMeshLayer)) {
 					EditorUtility.SetDirty(p);
 					p.UpdateMaterials();
 					p.UpdateMesh();

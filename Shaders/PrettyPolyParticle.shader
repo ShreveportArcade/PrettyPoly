@@ -82,7 +82,7 @@ Shader "PrettyPoly/Particle" {
 				disp += t * (v.color.xyz - 0.5f) * 2 * _Dist;
 				float ang = v.color.z * 2 * 3.1415;
 				disp.xy += float2(_Disp.x * cos(ang) - _Disp.y * sin(ang),
-	 						   _Disp.y * cos(ang) + _Disp.x * sin(ang));
+	 						   	  _Disp.y * cos(ang) + _Disp.x * sin(ang));
  								
  				float w = 1-_Weight;
  				w = w * w * w * w;

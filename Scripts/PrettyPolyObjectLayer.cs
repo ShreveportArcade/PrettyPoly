@@ -32,6 +32,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
     public Object prefab;
     [SortingLayer] public string sortingLayerName = "Default";
 	public int sortingOrder = 0;
+	public int sortingOrderVariation = 0;
 
 	public void UpdateObjects (Transform root, PrettyPolyPoint[] points, bool closed) {
 		if (prefab == null || points.Length < 2) return;
@@ -126,7 +127,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		if (spriteRenderer) {
 			spriteRenderer.color = GetShiftedColor(color, t);
 			spriteRenderer.sortingLayerName = sortingLayerName;
-			spriteRenderer.sortingOrder = sortingOrder;
+			spriteRenderer.sortingOrder = sortingOrder + Random.Range(-sortingOrderVariation, sortingOrderVariation);
 		}
 
 		index++;
