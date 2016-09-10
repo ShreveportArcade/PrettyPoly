@@ -99,16 +99,16 @@ public class PrettyPolyMeshLayerEditor : Editor {
 		}
 	}
 
-    public override bool HasPreviewGUI() {
-        return true;
-    }
+  //   public override bool HasPreviewGUI() {
+  //       return true;
+  //   }
 
-    public override void OnPreviewGUI(Rect r, GUIStyle background) {
-        if (Event.current.type != EventType.Repaint) return;
-        previewPoly.UpdateMaterials();
-		previewPoly.UpdateMesh();
-		previewPolyCam.Render();
-		EditorGUI.DrawPreviewTexture(r, renderTexture.ToTexture2D());
-    }
+  //   public override void OnPreviewGUI(Rect r, GUIStyle background) {
+  //       if (Event.current.type != EventType.Repaint) return;
+  //       previewPoly.UpdateMaterials();
+		// previewPoly.UpdateMesh();
+		// previewPolyCam.Render();
+		// EditorGUI.DrawPreviewTexture(r, renderTexture.ToTexture2D());
+  //   }
 }
 }
