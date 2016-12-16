@@ -77,6 +77,17 @@ public class PrettyPolyEditor : Editor {
 		Undo.RegisterCreatedObjectUndo(go, "Created PrettyPoly");
 	}
 
+	[MenuItem("Assets/Create/PrettyPoly/MeshLayer")]
+	static void CreatePrettyPolyMeshLayer () {
+		ScriptableObjectUtility.CreateAsset<PrettyPolyMeshLayer>();
+	}
+	
+	[MenuItem("Assets/Create/PrettyPoly/ObjectLayer")]
+	static void CreatePrettyPolyObjectLayer () {
+		ScriptableObjectUtility.CreateAsset<PrettyPolyObjectLayer>();
+	}
+	
+
 	public override void OnInspectorGUI() {
 		EditorUtility.SetSelectedWireframeHidden(prettyPoly.GetComponent<Renderer>(), true);
 		DrawDefaultInspector();

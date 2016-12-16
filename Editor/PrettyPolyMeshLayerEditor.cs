@@ -84,11 +84,11 @@ public class PrettyPolyMeshLayerEditor : Editor {
 		DrawDefaultInspector();
 
 		if (GUI.changed) {
-			if (targets != null && targets.Length > 0) previewPoly.meshLayers = targets as PrettyPolyMeshLayer[];
-			else previewPoly.meshLayers = new PrettyPolyMeshLayer[]{prettyPolyMeshLayer};
+			// if (targets != null && targets.Length > 0) previewPoly.meshLayers = targets as PrettyPolyMeshLayer[];
+			// else previewPoly.meshLayers = new PrettyPolyMeshLayer[]{prettyPolyMeshLayer};
         
 			EditorUtility.SetDirty(target);
-			EditorUtility.SetDirty(previewPoly.gameObject);
+			// EditorUtility.SetDirty(previewPoly.gameObject);
 			foreach (PrettyPoly p in prettyPolys) {
 				if (p != null && p.meshLayers != null && System.Array.Exists(p.meshLayers, (l) => l != null && prettyPolyMeshLayer != null && l == prettyPolyMeshLayer)) {
 					EditorUtility.SetDirty(p);

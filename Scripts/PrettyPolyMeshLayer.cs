@@ -35,7 +35,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
     private int spriteIndex = 0;
     private Sprite sprite {
     	get {
-    		if (spriteIndex >= sprites.Length) return null;
+    		if (spriteIndex >= sprites.Length || spriteIndex < 0) return null;
     		return sprites[spriteIndex];
     	}
     }
