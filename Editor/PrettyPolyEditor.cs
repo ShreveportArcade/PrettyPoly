@@ -45,17 +45,17 @@ public class PrettyPolyEditor : Editor {
     }
 
     static void Update () {
-        Transform selection = Selection.activeTransform;
-        if (selection == null || selection.parent == null) {
-        	selectedPoly = null;
-        	return;
-        } 
+        // Transform selection = Selection.activeTransform;
+        // if (selection == null || selection.parent == null) {
+        // 	selectedPoly = null;
+        // 	return;
+        // } 
 
-        PrettyPoly prettyPoly = selection.parent.gameObject.GetComponent<PrettyPoly>();
-        if (prettyPoly != null && selectedPoly != prettyPoly) {
-        	Selection.activeGameObject = prettyPoly.gameObject;
-        	selectedPoly = prettyPoly;
-        }
+        // PrettyPoly prettyPoly = selection.parent.gameObject.GetComponent<PrettyPoly>();
+        // if (prettyPoly != null && selectedPoly != prettyPoly) {
+        // 	Selection.activeGameObject = prettyPoly.gameObject;
+        // 	selectedPoly = prettyPoly;
+        // }
     }
 
 	[MenuItem("GameObject/2D Object/PrettyPoly")]
