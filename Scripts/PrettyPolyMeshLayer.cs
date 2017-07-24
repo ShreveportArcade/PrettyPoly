@@ -182,7 +182,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	}
 
 	public void AddSolidEdge (Vector3[] points, float pathLength, bool closed) {
-		Random.seed = seed;
+		Random.InitState(seed);
 		int segments = points.Length + (closed?1:0);
 		int index = 0;
 		float distTraveled = 0;
@@ -209,7 +209,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		float nextCavity = Vector3.Cross(currOut, nextOut).z;
 		
 		for (int i = 1; i < segments; i++) {
-			Random.seed = index + seed;
+			Random.InitState(index + seed);
 			
 			prev = curr;
 			curr = next;
@@ -450,7 +450,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 		for (int i = 0; i < segments; i++) {
 			float frac = (float)i / segments;
 			Vector3 p = Vector3.Lerp(a, b, frac);
-			Random.seed = i + seed;
+			Random.InitState(i + seed);
 			AddScatterQuad(p, dir, ref index, (distTraveled + dist * frac) / pathLength);
 		}
 		distTraveled += dist;
@@ -459,7 +459,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 	public void AddScatterQuad (Vector3 position, Vector3 dir, ref int index, float t) {
 		if (placementFrequency < Random.value) return;
 
-		Random.seed = index + seed;
+		Random.InitState(index + seed);
 		RandomizeSprite();
 		dir = GetDirection(dir, index, t);
 		Vector3 right = Vector3.Cross(dir, -Vector3.forward);

@@ -76,7 +76,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 		for (int i = 0; i < segments; i++) {
 			float frac = (float)i / segments;
 			Vector3 p = Vector3.Lerp(a, b, frac);
-			Random.seed = i + seed;
+			Random.InitState(i + seed);
 			AddObject(root, p, dir, ref index, (distTraveled + dist * frac) / pathLength);
 		}
 		distTraveled += dist;
@@ -101,7 +101,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
 	public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index, float t) {
 		if (placementFrequency < Random.value) return;
 
-		Random.seed = index + seed;
+		Random.InitState(index + seed);
 
 		dir = GetDirection(dir, index, t);
 		Vector3 right = Vector3.Cross(dir, -Vector3.forward);

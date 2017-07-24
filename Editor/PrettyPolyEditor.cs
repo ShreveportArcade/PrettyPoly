@@ -89,7 +89,7 @@ public class PrettyPolyEditor : Editor {
 	
 
 	public override void OnInspectorGUI() {
-		EditorUtility.SetSelectedWireframeHidden(prettyPoly.GetComponent<Renderer>(), true);
+		EditorUtility.SetSelectedRenderState(prettyPoly.GetComponent<Renderer>(), EditorSelectedRenderState.Hidden);
 		DrawDefaultInspector();
 		UpdateLabels();
 
