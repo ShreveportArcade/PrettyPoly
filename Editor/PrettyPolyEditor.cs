@@ -185,7 +185,7 @@ public class PrettyPolyEditor : Editor {
 					Quaternion.identity, 
 					size, 
 					Vector3.zero, 
-					Handles.CircleCap
+					Handles.CircleHandleCap
 				);
 				point.position.z = 0;
 
@@ -218,7 +218,7 @@ public class PrettyPolyEditor : Editor {
 			GUI.SetNextControlName("remove pretty poly point " + i);
 			Vector3 mid = (p1 + p2) * 0.5f;
 			float size = GetHandleSize(mid, 0.5f);
-			if (Handles.Button(mid, Quaternion.identity, size, size, Handles.CircleCap)) {
+			if (Handles.Button(mid, Quaternion.identity, size, size, Handles.CircleHandleCap)) {
 				Vector3 inT = (p1 - mid).normalized;
 				Vector3 outT = (p2 - mid).normalized;
 				points.Insert(n, new PrettyPolyPoint(mid, inT, outT));
@@ -249,7 +249,7 @@ public class PrettyPolyEditor : Editor {
 			Handles.color = Color.red;
    		 	float size = GetHandleSize(prettyPoly.points[i].position, 1);
    			GUI.SetNextControlName("remove pretty poly point " + i);
-			if (Handles.Button(prettyPoly.points[i].position, Quaternion.identity, size, size, Handles.CircleCap)) {
+			if (Handles.Button(prettyPoly.points[i].position, Quaternion.identity, size, size, Handles.CircleHandleCap)) {
 				RemovePoint(i);
 				break;
 			}
@@ -263,7 +263,7 @@ public class PrettyPolyEditor : Editor {
 			Quaternion.identity, 
 			GetHandleSize(point, 0.3f), 
 			Vector3.zero, 
-			Handles.CircleCap
+			Handles.CircleHandleCap
 		) - point;
 		p.z = 0;
     	return p;
