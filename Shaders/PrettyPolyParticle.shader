@@ -1,4 +1,6 @@
-﻿// Copyright (C) 2014 Nolan Baker
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Copyright (C) 2014 Nolan Baker
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
 // documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
@@ -88,7 +90,7 @@ Shader "PrettyPoly/Particle" {
  				w = w * w * w * w;
  				w = 1-w;
  				v.vertex.xyz = lerp(disp, v.vertex.xyz, w);
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				o.vertex = UnityObjectToClipPos(v.vertex);
 				
 				o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
 				return o;
