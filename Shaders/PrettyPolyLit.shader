@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2014 Nolan Baker
+﻿// Copyright (C) 2018 Nolan Baker
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
 // documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
@@ -15,39 +15,39 @@
 // DEALINGS IN THE SOFTWARE.
 
 Shader "PrettyPoly/Lit" {
-	Properties {
-		_MainTex ("Base (RGB)", 2D) = "white" {}
-		_BumpTex ("Normal Map", 2D) = "bump" {}
-	}
-	SubShader {
-		Tags { 
-			"Queue"="Transparent" 
-			"RenderType"="Transparent" 
-			"CanUseSpriteAtlas"="True"
-		}
-		LOD 200
-		Cull Off
-		ZWrite Off
-		Blend SrcAlpha OneMinusSrcAlpha
+    Properties {
+        _MainTex ("Base (RGB)", 2D) = "white" {}
+        _BumpTex ("Normal Map", 2D) = "bump" {}
+    }
+    SubShader {
+        Tags { 
+            "Queue"="Transparent" 
+            "RenderType"="Transparent" 
+            "CanUseSpriteAtlas"="True"
+        }
+        LOD 200
+        Cull Off
+        ZWrite Off
+        Blend SrcAlpha OneMinusSrcAlpha
 
-		CGPROGRAM
-		#pragma surface surf Lambert alpha
+        CGPROGRAM
+        #pragma surface surf Lambert alpha
 
-		sampler2D _MainTex;
-		sampler2D _BumpTex;
+        sampler2D _MainTex;
+        sampler2D _BumpTex;
 
-		struct Input {
-			float2 uv_MainTex;
-			float4 color : COLOR;
-		};
+        struct Input {
+            float2 uv_MainTex;
+            float4 color : COLOR;
+        };
 
-		void surf (Input IN, inout SurfaceOutput o) {
-			half4 c = tex2D (_MainTex, IN.uv_MainTex) * IN.color;
-			o.Normal = UnpackNormal(tex2D(_BumpTex, IN.uv_MainTex));
-			o.Albedo = c.rgb * c.a;
-			o.Alpha = c.a;
-		}
-		ENDCG
-	} 
-	FallBack "Diffuse"
+        void surf (Input IN, inout SurfaceOutput o) {
+            half4 c = tex2D (_MainTex, IN.uv_MainTex) * IN.color;
+            o.Normal = UnpackNormal(tex2D(_BumpTex, IN.uv_MainTex));
+            o.Albedo = c.rgb * c.a;
+            o.Alpha = c.a;
+        }
+        ENDCG
+    } 
+    FallBack "Diffuse"
 }

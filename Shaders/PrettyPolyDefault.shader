@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Copyright (C) 2014 Nolan Baker
+﻿// Copyright (C) 2018 Nolan Baker
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
 // documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
@@ -18,63 +16,63 @@
 
 Shader "PrettyPoly/Default" {
 Properties {
-	_MainTex ("Base (RGB) Alpha (A)", 2D) = "white" {}
+    _MainTex ("Base (RGB) Alpha (A)", 2D) = "white" {}
 }
 
 SubShader {
-	Tags { 
-		"Queue"="Transparent" 
-		"IgnoreProjector"="True" 
-		"RenderType"="Transparent" 
-		"PreviewType"="Plane"
-		"CanUseSpriteAtlas"="True"
-	}
-	Lighting Off
-	Cull Off
-	ZWrite Off
-	Blend SrcAlpha OneMinusSrcAlpha
-	
-	Pass {  
-		CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma multi_compile_fog
+    Tags { 
+        "Queue"="Transparent" 
+        "IgnoreProjector"="True" 
+        "RenderType"="Transparent" 
+        "PreviewType"="Plane"
+        "CanUseSpriteAtlas"="True"
+    }
+    Lighting Off
+    Cull Off
+    ZWrite Off
+    Blend SrcAlpha OneMinusSrcAlpha
+    
+    Pass {  
+        CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fog
 
-			#include "UnityCG.cginc"
+            #include "UnityCG.cginc"
 
-			struct appdata_t {
-				float4 vertex : POSITION;
-				float4 color : COLOR;
-				float2 texcoord : TEXCOORD0;
-			};
+            struct appdata_t {
+                float4 vertex : POSITION;
+                float4 color : COLOR;
+                float2 texcoord : TEXCOORD0;
+            };
 
-			struct v2f {
-				float4 vertex : POSITION;
-				float4 color : COLOR;
-				float2 texcoord : TEXCOORD0;
-				UNITY_FOG_COORDS(1)
-			};
+            struct v2f {
+                float4 vertex : POSITION;
+                float4 color : COLOR;
+                float2 texcoord : TEXCOORD0;
+                UNITY_FOG_COORDS(1)
+            };
 
-			sampler2D _MainTex;
-			float4 _MainTex_ST;
-			
-			v2f vert (appdata_t v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.color = v.color;
-				o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
-				UNITY_TRANSFER_FOG(o,o.vertex);
-				return o;
-			}
-			
-			half4 frag (v2f i) : COLOR {
-				half4 c = tex2D(_MainTex, i.texcoord) * i.color;
-				UNITY_APPLY_FOG(i.fogCoord, c);
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            
+            v2f vert (appdata_t v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.color = v.color;
+                o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
+                UNITY_TRANSFER_FOG(o,o.vertex);
+                return o;
+            }
+            
+            half4 frag (v2f i) : COLOR {
+                half4 c = tex2D(_MainTex, i.texcoord) * i.color;
+                UNITY_APPLY_FOG(i.fogCoord, c);
 
-				return c;
-			}
-		ENDCG
-	}
+                return c;
+            }
+        ENDCG
+    }
 }
 }
