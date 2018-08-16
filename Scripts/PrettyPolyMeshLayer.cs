@@ -248,7 +248,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
                 Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
                 
-                if (!hasDepth &&prevOutExists && (closed || i != 1)) {
+                if (!hasDepth && prevOutExists && (closed || i != 1)) {
                     if (currCavity < 0) {
                         switch (outerJoinType) {
                             case JoinType.Miter:
@@ -284,7 +284,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 Vector3 outA = currOut;
                 Vector3 outB = currOut;
                 if (hasDepth) {
-                    if (prevOutExists) outA = Vector3.Lerp(outA, prevOut, 0.5f);
+                    if (prevOutExists && (closed || i != 1)) outA = Vector3.Lerp(outA, prevOut, 0.5f);
                     if (nextOutExists) outB = Vector3.Lerp(outB, nextOut, 0.5f);
                 }
                 else if (nextOutExists && nextCavity > 0) {
@@ -294,16 +294,16 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 RandomizeSprite();
                 
                 if (closed || i != segments-1) {
-                    AddSolidEdgeSegment(a, b, outA, outB, size, c, ref index, ref uvFrac);
+                    AddSolidEdgeSegment(a, b, outA, outB, size, c, ref index, ref uvFrac, segments > 2);
                 }
                 else {
-                    AddSolidEdgeSegment(a, points[(i+1)%points.Length], outA, outB, size, c, ref index, ref uvFrac);
+                    AddSolidEdgeSegment(a, points[(i+1)%points.Length], outA, outB, size, c, ref index, ref uvFrac, segments > 2);
                 }
             }
         }
     }
 
-    public void AddSolidEdgeSegment (Vector3 a, Vector3 b, Vector3 outA, Vector3 outB, float size, Color c, ref int index, ref float uvFrac) {
+    public void AddSolidEdgeSegment (Vector3 a, Vector3 b, Vector3 outA, Vector3 outB, float size, Color c, ref int index, ref float uvFrac, bool smoothNormals = false) {
         Vector3 dir = (b - a).normalized;
         float dist = Vector3.Distance(a, b);
         float segLen = size * GetWidthToHeightRatio();
@@ -336,12 +336,17 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             
             uvs.AddRange(GetSpriteUVs(uvFrac, nextUvFrac));
             colors.AddRange(new Color[] {c, c, c, c});
-            norms.AddRange(new Vector3[] {n, n, n, n});
+            distTraveled += distToNext;
+            if (hasDepth && smoothNormals) {
+                Vector3 nextN = Vector3.Lerp(outA, outB, distTraveled / dist).normalized;
+                norms.AddRange(new Vector3[] {n, nextN, nextN, n});
+                n = nextN;
+            }
+            else norms.AddRange(new Vector3[] {n, n, n, n});
             tans.AddRange(new Vector4[] {tan, tan, tan, tan});
             tris.AddRange(new int[] {index, index+1, index+3, index+1, index+2, index+3});
             index += 4;
 
-            distTraveled += distToNext;
             uvFrac = nextUvFrac % 1f;
             distToNext = Mathf.Min(segLen * (1 - uvFrac), dist - distTraveled);
             nextUvFrac = uvFrac + (distToNext / segLen);
