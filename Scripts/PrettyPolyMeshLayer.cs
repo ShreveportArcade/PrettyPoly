@@ -351,24 +351,32 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
     }
 
     public void AddSolidEdgeRoundedJoin (Vector3 pos, Vector3 outward, Vector3 prevOut, float rotation, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
-        int segments = Mathf.CeilToInt(Mathf.Abs(rotation));
+        int segments = Mathf.CeilToInt(Mathf.Abs(rotation / 3));
         if (segments == 0) return;
         
-        Vector2[] quadUVs = GetSpriteUVs();
+        float segLen = size * GetWidthToHeightRatio();
+        float dist = Vector3.Distance(pos + prevOut * size, pos + outward * size);
+        float distToNext = Mathf.Min(segLen * (1 - uvFrac), dist);
+        float nextUvFrac = uvFrac + (distToNext / segLen);
+
+        Vector2[] quadUVs = GetSpriteUVs(uvFrac, nextUvFrac);
+        if (flipUVs) quadUVs.Reverse();
+
+        uvFrac = nextUvFrac % 1f;
         Vector4 tan = (Vector4)Vector3.right;
         tan.w = 1;
-        tans.AddRange(new Vector4[] {tan, tan});
-        norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward});
-        colors.AddRange(new Color[] {c, c});
-        verts.AddRange(new Vector3[] {pos, pos + prevOut * size});
-        uvs.AddRange(new Vector2[] {(quadUVs[2] + quadUVs[3]) * 0.5f, quadUVs[0]});
+        tans.Add(tan);
+        norms.Add(-Vector3.forward);
+        colors.Add(c);
+        verts.Add(pos);
+        uvs.Add((quadUVs[2] + quadUVs[3]) * 0.5f);
 
         Quaternion rot = Quaternion.AngleAxis(rotation / (float)segments, -Vector3.forward);
-        prevOut = rot * prevOut;
-        for (int i = 1; i < segments; i++) {
-            float frac = (float)i / (float)segments;
-            prevOut = rot * prevOut;
+        for (int i = 0; i < segments+1; i++) {
             verts.Add(pos + prevOut * size);
+            prevOut = rot * prevOut;
+            float frac = (float)i / (float)segments;
+            if (flipUVs) frac = 1-frac;
             uvs.Add(Vector2.Lerp(quadUVs[0], quadUVs[1], frac));
             colors.Add(c);
             norms.Add(-Vector3.forward);
@@ -376,26 +384,29 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             tris.AddRange(new int[] {index+i, index+i+1, index});
         }
 
-        verts.Add(pos + outward * size);
-        uvs.Add(quadUVs[1]);
-        colors.Add(c);
-        norms.Add(-Vector3.forward);
-        tan = (Vector4)Vector3.right;
-        tan.w = 1;
         tans.Add(tan);
-        tris.AddRange(new int[] {index+segments, index+segments+1, index});
-
-        index += segments + 2;
+        norms.Add(-Vector3.forward);
+        colors.Add(c);
+        verts.Add(pos + outward * size);
+        uvs.Add(quadUVs[flipUVs ? 1 : 0]);
+        index += segments + 3;
     }
 
     public void AddSolidEdgeMiterJoin (Vector3 pos, Vector3 outward, Vector3 prevOut, float size, Color c, bool flipUVs, ref int index, ref float uvFrac) {
-        verts.AddRange(new Vector3[] {
+        Vector3[] miter = new Vector3[] {
             pos + prevOut * size,
             pos + outward * size,
             pos
-        });
+        };
+        verts.AddRange(miter);
 
-        Vector2[] quadUVs = GetSpriteUVs();
+        float segLen = size * GetWidthToHeightRatio();
+        float dist = Vector3.Distance(miter[0], miter[1]);
+        float distToNext = Mathf.Min(segLen * (1 - uvFrac), dist);
+        float nextUvFrac = uvFrac + (distToNext / segLen);
+
+        Vector2[] quadUVs = GetSpriteUVs(uvFrac, nextUvFrac);
+        uvFrac = nextUvFrac % 1f;
         int[] triArray = new int[] {index, index+1, index+2};
 
         if (flipUVs) {
