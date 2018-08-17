@@ -91,6 +91,20 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
         }
     }
 
+    public struct EdgeData {
+        public Vector3 position;
+        public Vector3 outward;
+        public float size;
+        public Color color;
+
+        public EdgeData (Vector3 position, Vector3 outward, float size, Color color) {
+            this.position = position;
+            this.outward = outward;
+            this.size = size;
+            this.color = color;
+        }
+    }
+
     public PrettyPolyMeshLayer () : base () {
         minTileSize = 100;
         outerJoinType = JoinType.Rounded;
@@ -215,6 +229,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
         bool hasPrevJoin = Vector2.Angle(prevOut, currOut) > minJoinAngle;
         bool hasNextJoin = Vector2.Angle(nextOut, currOut) > minJoinAngle;
+
+        float prevSize = GetSize();
+        float currSize = GetSize();
+
+        Color prevColor = GetShiftedColor(color);
+        Color currColor = GetShiftedColor(color);
         
         for (int i = 1; i < segments; i++) {
             Random.InitState(index + seed);
@@ -243,9 +263,11 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             hasNextJoin = Vector2.Angle(nextOut, currOut) > minJoinAngle;
 
             distTraveled += Vector3.Distance(curr, next);
-            float t = distTraveled / pathLength;
-            float size = GetSize(t);
-            Color c = GetShiftedColor(color, t);
+
+            prevSize = currSize;
+            currSize = GetSize();
+            prevColor = currColor;
+            currColor = GetShiftedColor(color);
 
             if (currOutExists) {
                 RandomizeSprite();
@@ -260,30 +282,30 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                     if (currCavity < 0) {
                         switch (outerJoinType) {
                             case JoinType.Miter:
-                                AddSolidEdgeMiterJoin(curr, currOut, prevOut, size, c, false, ref index, ref uvFrac);
+                                AddSolidEdgeMiterJoin(curr, currOut, prevOut, prevSize, prevColor, false, ref index, ref uvFrac);
                                 break;
                             case JoinType.Bevel:
-                                AddSolidEdgeBevelJoin(curr, currOut, prevOut, abIntersect, size, c, false, ref index, ref uvFrac);
+                                AddSolidEdgeBevelJoin(curr, currOut, prevOut, abIntersect, prevSize, prevColor, false, ref index, ref uvFrac);
                                 break;
                             case JoinType.Rounded:
                                 float rot = Vector3.Angle(prevOut, currOut);
-                                AddSolidEdgeRoundedJoin(curr, currOut, prevOut, rot, size, c, false, ref index, ref uvFrac);
+                                AddSolidEdgeRoundedJoin(curr, currOut, prevOut, rot, prevSize, prevColor, false, ref index, ref uvFrac);
                                 break;
                         }
                     }
                     else {
-                        a = curr + (abIntersect - currOut) * size;
-                        Vector3 pivot = curr + abIntersect * size;
+                        a = curr + (abIntersect - currOut) * prevSize;
+                        Vector3 pivot = curr + abIntersect * prevSize;
                         switch (innerJoinType) {
                             case JoinType.Miter:
-                                AddSolidEdgeMiterJoin(pivot, -currOut, -prevOut, size, c, true, ref index, ref uvFrac);
+                                AddSolidEdgeMiterJoin(pivot, -currOut, -prevOut, prevSize, prevColor, true, ref index, ref uvFrac);
                                 break;
                             case JoinType.Bevel:
-                                AddSolidEdgeBevelJoin(pivot, -currOut, -prevOut, -abIntersect, size, c, true, ref index, ref uvFrac);
+                                AddSolidEdgeBevelJoin(pivot, -currOut, -prevOut, -abIntersect, prevSize, prevColor, true, ref index, ref uvFrac);
                                 break;
                             case JoinType.Rounded:
                                 float rot = Vector3.Angle(prevOut, currOut);
-                                AddSolidEdgeRoundedJoin(pivot, -prevOut, -currOut, rot, size, c, true, ref index, ref uvFrac);
+                                AddSolidEdgeRoundedJoin(pivot, -prevOut, -currOut, rot, prevSize, prevColor, true, ref index, ref uvFrac);
                                 break;
                         }
                     }
@@ -299,45 +321,45 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 }
 
                 if (!hasDepth && nextOutExists && hasNextJoin && nextCavity > 0 && hasNextJoin) {
-                    b = next + (bcIntersect - currOut) * size;
+                    b = next + (bcIntersect - currOut) * currSize;
                 }
                 
                 RandomizeSprite();
-                
-                if (closed || i != segments-1) {
-                    AddSolidEdgeSegment(a, b, outA, outB, size, c, ref index, ref uvFrac, segments > 2);
-                }
-                else {
-                    AddSolidEdgeSegment(a, points[(i+1)%points.Length], outA, outB, size, c, ref index, ref uvFrac, segments > 2);
-                }
+                EdgeData edgeA = new EdgeData(a, outA, prevSize, prevColor);
+                EdgeData edgeB = new EdgeData(b, outB, currSize, currColor);
+                AddSolidEdgeSegment(edgeA, edgeB, ref index, ref uvFrac, segments > 2);
             }
         }
     }
 
-    public void AddSolidEdgeSegment (Vector3 a, Vector3 b, Vector3 outA, Vector3 outB, float size, Color c, ref int index, ref float uvFrac, bool smoothNormals = false) {
-        Vector3 dir = (b - a).normalized;
-        float dist = Vector3.Distance(a, b);
+    public void AddSolidEdgeSegment (EdgeData a, EdgeData b, ref int index, ref float uvFrac, bool smoothNormals = false) {
+        Vector3 dir = (b.position - a.position).normalized;
+        float dist = Vector3.Distance(a.position, b.position);
         float segLen = size * GetWidthToHeightRatio();
         segLen = Mathf.Max(segLen, dist / Mathf.Ceil(dist / (segLen + maxStretch)));
 
-        Vector3 o = hasDepth ? Vector3.forward : outA;
-        o *= size;
-        Vector3 n = hasDepth ? outA : Vector3.back;
+        Vector3 o = hasDepth ? Vector3.forward : a.outward;
+        o *= a.size;
+        Vector3 n = hasDepth ? a.outward : Vector3.back;
         Vector4 tan = hasDepth ? (Vector4)Vector3.back : (Vector4)Vector3.right;
         tan.w = 1;
 
         float distTraveled = 0;
         float distToNext = Mathf.Min(segLen * (1 - uvFrac), dist);
         float nextUvFrac = uvFrac + (distToNext / segLen);
-        Vector3 curr = a;
-        Vector3 next = a + dir * distToNext;
+        Vector3 curr = a.position;
+        Vector3 next = a.position + dir * distToNext;
 
         Vector3 oA = o;
         Vector3 oB = o;
-        if (!hasDepth) oB = Vector3.Lerp(outA, outB, distToNext / dist).normalized * size;
+        Color cA = a.color;
+        Color cB = cA;
+        float frac = distToNext / dist;
+        if (!hasDepth) oB = Vector3.Lerp(a.outward, b.outward, frac).normalized * Mathf.Lerp(a.size, b.size, frac);
         while (distTraveled < dist) {
             distTraveled += distToNext;
-            
+            frac = distTraveled / dist;
+
             verts.AddRange(new Vector3[] {
                 curr + oA,
                 next + oB, 
@@ -346,9 +368,13 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             });
             
             uvs.AddRange(GetSpriteUVs(uvFrac, nextUvFrac));
-            colors.AddRange(new Color[] {c, c, c, c});
+
+            cB = Color.Lerp(a.color, b.color, frac);
+            colors.AddRange(new Color[] {cA, cB, cB, cA});
+            cA = cB;
+
             if (hasDepth && smoothNormals) {
-                Vector3 nextN = Vector3.Lerp(outA, outB, distTraveled / dist).normalized;
+                Vector3 nextN = Vector3.Lerp(a.outward, b.outward, frac).normalized;
                 norms.AddRange(new Vector3[] {n, nextN, nextN, n});
                 n = nextN;
             }
@@ -365,7 +391,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
 
             if (!hasDepth) {
                 oA = oB;
-                oB = Vector3.Lerp(outA, outB, Mathf.Clamp01((distTraveled+distToNext) / dist)).normalized * size;
+                frac = Mathf.Clamp01((distTraveled + distToNext) / dist);
+                oB = Vector3.Lerp(a.outward, b.outward, frac).normalized * Mathf.Lerp(a.size, b.size, frac);
             }
         }
     }
@@ -504,21 +531,21 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             float frac = (float)i / segments;
             Vector3 p = Vector3.Lerp(a, b, frac);
             Random.InitState(i + seed);
-            AddScatterQuad(p, dir, ref index, (distTraveled + dist * frac) / pathLength);
+            AddScatterQuad(p, dir, ref index);
         }
         distTraveled += dist;
     }
         
-    public void AddScatterQuad (Vector3 position, Vector3 dir, ref int index, float t) {
+    public void AddScatterQuad (Vector3 position, Vector3 dir, ref int index) {
         if (placementFrequency < Random.value) return;
 
         Random.InitState(index + seed);
         RandomizeSprite();
-        dir = GetDirection(dir, index, t);
+        dir = GetDirection(dir, index);
         Vector3 right = Vector3.Cross(dir, -Vector3.forward);
         Vector3 up = Vector3.Cross(-Vector3.forward, right);
 
-        float s = GetSize(t);
+        float s = GetSize();
         Vector3 p = GetPosition(position, right, up, s);
 
         if (sprite != null) up *= sprite.bounds.extents.y / sprite.bounds.extents.x;
@@ -531,7 +558,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
         
         uvs.AddRange(GetSpriteUVs());
         
-        Color c = GetShiftedColor(color, t);
+        Color c = GetShiftedColor(color);
         colors.AddRange(new Color[] {c, c, c, c});
 
         norms.AddRange(new Vector3[] {-Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward});
@@ -563,8 +590,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 tans.Add(Vector3.right);
 
                 // colors.Add(randC); //												TEST
-                float frac = p / pathLength; //											NORMAL
-                colors.Add(GetShiftedColor(color, frac)); //							NORMAL
+                colors.Add(GetShiftedColor(color)); //	        						NORMAL
 
                 Vector3 p1 = v[i];
                 Vector3 p2 = v[(i+1) % v.Length];
@@ -600,7 +626,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             for (float y = b.min.y; y < b.max.y; y += s) {
                 Vector3 p = new Vector3(x, y, 0);
                 if (poly.Contains(p)) {
-                    AddScatterQuad (p, Vector3.right, ref index, 0);
+                    AddScatterQuad (p, Vector3.right, ref index);
                 }
             }
         }

@@ -77,7 +77,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
             float frac = (float)i / segments;
             Vector3 p = Vector3.Lerp(a, b, frac);
             Random.InitState(i + seed);
-            AddObject(root, p, dir, ref index, (distTraveled + dist * frac) / pathLength);
+            AddObject(root, p, dir, ref index);
         }
         distTraveled += dist;
     }
@@ -91,23 +91,23 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
             for (float y = b.min.y; y < b.max.y; y += s) {
                 Vector3 p = new Vector3(x, y, 0);
                 if (poly.Contains(p)) {
-                    AddObject(root, p, Vector3.right, ref index, 0);
+                    AddObject(root, p, Vector3.right, ref index);
                 }
             }
         }
         root.DestroyChildrenAfter(index);
     }
         
-    public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index, float t) {
+    public void AddObject (Transform root, Vector3 position, Vector3 dir, ref int index) {
         if (placementFrequency < Random.value) return;
 
         Random.InitState(index + seed);
 
-        dir = GetDirection(dir, index, t);
+        dir = GetDirection(dir, index);
         Vector3 right = Vector3.Cross(dir, -Vector3.forward);
         Vector3 up = Vector3.Cross(-Vector3.forward, right);
 
-        float s = GetSize(t);
+        float s = GetSize();
         Vector3 p = GetPosition(position, right, up, s);
         
         GameObject g;
@@ -125,7 +125,7 @@ public class PrettyPolyObjectLayer : PrettyPolyLayer {
         g.transform.localScale = Vector3.one * s;
         SpriteRenderer spriteRenderer = g.GetComponent<SpriteRenderer>();
         if (spriteRenderer) {
-            spriteRenderer.color = GetShiftedColor(color, t);
+            spriteRenderer.color = GetShiftedColor(color);
             spriteRenderer.sortingLayerName = sortingLayerName;
             spriteRenderer.sortingOrder = sortingOrder + Random.Range(-sortingOrderVariation, sortingOrderVariation);
         }

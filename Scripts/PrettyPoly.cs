@@ -32,6 +32,7 @@ public class PrettyPoly : MonoBehaviour {
     public bool closed = false;
     public bool solid = true;
     public bool addCollider = false;
+    public bool use3DPhysics = false;
     public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
     [Range(0, 10)] public int subdivisions = 0;
 

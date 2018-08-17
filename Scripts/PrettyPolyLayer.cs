@@ -128,7 +128,7 @@ public class PrettyPolyLayer : ScriptableObject {
         if (size < 0.01f) size = 0.01f;
     }
 
-    public Color GetShiftedColor (Color color, float t) {
+    public Color GetShiftedColor (Color color) {
         Vector4 hsv = ColorUtils.RGBtoHSV(color);
         hsv.x = Mathf.Clamp01((hsv.x + Random.Range(-hueVariation,hueVariation) + 1f) % 1f);
         hsv.y = Mathf.Clamp01(hsv.y + Random.Range(-saturationVariation,saturationVariation));
@@ -143,7 +143,7 @@ public class PrettyPolyLayer : ScriptableObject {
         return (dev <= range);
     }
 
-    public float GetSize (float t) {
+    public float GetSize () {
         float s = size * (1 - Random.Range(-sizeVariation, sizeVariation));
         if (s < 0.001f && s > -0.001f) s = 0.001f * Mathf.Sign(s);
         return s;
@@ -155,7 +155,7 @@ public class PrettyPolyLayer : ScriptableObject {
             up * Random.Range(-positionVariation, positionVariation) * size;
     }
 
-    public Vector3 GetDirection (Vector3 dir, int index, float t) {
+    public Vector3 GetDirection (Vector3 dir, int index) {
         Vector3 normal = -Vector3.forward;
         float a = angle;
         if (alternateAngles && (index % 2) == 1) a = 180 - a;
