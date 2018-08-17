@@ -30,9 +30,15 @@ public class PrettyPoly : MonoBehaviour {
     public static event OnCollision2DCallback onCollision2D = delegate{};
 
     public bool closed = false;
-    public bool solid = true;
-    public bool addCollider = false;
-    public bool use3DPhysics = false;
+    public enum PhysicsType {
+        None,
+        Edge2D,
+        Polygon2D,
+        Boxes3D,
+        Mesh3D
+    }
+    public PhysicsType physicsType = PhysicsType.None;
+
     public PrettyPolyPoint[] points = new PrettyPolyPoint[0];
     [Range(0, 10)] public int subdivisions = 0;
 
@@ -188,20 +194,60 @@ public class PrettyPoly : MonoBehaviour {
     }
 
     public void AddCollider (PrettyPolyPoint[] pts) {
-        if (closed && solid) {
-            gameObject.DestroyComponent<EdgeCollider2D>();
-            PolygonCollider2D c = gameObject.GetOrAddComponent<PolygonCollider2D>();
-            c.SetPath(0, System.Array.ConvertAll(pts, point => (Vector2)point.position));
-        }
-        else {
-            gameObject.DestroyComponent<PolygonCollider2D>();
-            EdgeCollider2D c = gameObject.GetOrAddComponent<EdgeCollider2D>();
-            c.points = System.Array.ConvertAll(pts, point => (Vector2)point.position);
-            if (closed) {
-                List<Vector2> closedPts = new List<Vector2>(c.points);
-                closedPts.Add(closedPts[0]);
-                c.points = closedPts.ToArray();
-            }
+        switch (physicsType) {
+            case PhysicsType.Edge2D: {
+                    gameObject.DestroyComponent<PolygonCollider2D>();
+                    gameObject.DestroyComponents<BoxCollider>();
+                    EdgeCollider2D c = gameObject.GetOrAddComponent<EdgeCollider2D>();
+                    c.points = System.Array.ConvertAll(pts, point => (Vector2)point.position);
+                    if (closed) {
+                        List<Vector2> closedPts = new List<Vector2>(c.points);
+                        closedPts.Add(closedPts[0]);
+                        c.points = closedPts.ToArray();
+                    }
+                }
+                break;
+            case PhysicsType.Polygon2D: {
+                    gameObject.DestroyComponent<EdgeCollider2D>();
+                    gameObject.DestroyComponents<BoxCollider>();
+                    PolygonCollider2D c = gameObject.GetOrAddComponent<PolygonCollider2D>();
+                    c.SetPath(0, System.Array.ConvertAll(pts, point => (Vector2)point.position));
+                }
+                break;
+            case PhysicsType.Boxes3D:
+                    gameObject.DestroyComponent<PolygonCollider2D>();
+                    gameObject.DestroyComponent<EdgeCollider2D>();
+                    BoxCollider[] boxes = GetComponentsInChildren<BoxCollider>(true);
+                    int boxCount = boxes.Length;
+                    int numPoints = pts.Length;
+                    int max = Mathf.Max(boxCount, numPoints);
+                    for (int i = 0; i < max; i++) {
+                        BoxCollider box = null;
+                        if (i < boxCount) {
+                            box = boxes[i];
+                            box.gameObject.SetActive(true);
+                        }
+                        else {
+                            GameObject g = new GameObject("boxCollider");
+                            g.transform.SetParent(transform);
+                            box = g.AddComponent<BoxCollider>();
+                        }
+                        if ((!closed && i < numPoints) || (closed && i < numPoints-1)) {
+                            Vector3 a = pts[i].position;
+                            Vector3 b = pts[(i+1)%numPoints].position;
+                            float dist = Vector3.Distance(a, b);
+                            box.transform.localPosition = (a + b) * 0.5f;
+                            box.transform.right = transform.TransformDirection(b - a).normalized;
+                            box.center = Vector3.up * -0.05f;
+                            box.size = new Vector3(dist, 0.1f, 5);
+                            box.gameObject.layer = gameObject.layer;
+                        }
+                        else box.gameObject.SetActive(false);
+                    }
+                break;
+            case PhysicsType.Mesh3D:
+                Debug.LogWarning("Not implemented!");
+                break;
         }
     }
 
@@ -220,7 +266,7 @@ public class PrettyPoly : MonoBehaviour {
     [ContextMenu("Update Mesh")]
     public void UpdateMesh () {
         PrettyPolyPoint[] pts = (subdivisions > 0)? GetCurve(): points;
-        if (addCollider) AddCollider(pts);
+        if (physicsType != PhysicsType.None) AddCollider(pts);
         else gameObject.DestroyComponent<PolygonCollider2D>();
         if (meshLayers == null || meshLayers.Length == 0) {
             mesh.Clear();
@@ -297,9 +343,6 @@ public class PrettyPoly : MonoBehaviour {
             if (objectLayers[i] == null) continue;
             objectLayers[i].UpdateObjects(transform, pts, closed);
         }
-
-        if (addCollider) AddCollider(pts);
-        else gameObject.DestroyComponent<PolygonCollider2D>();
     }
 
     void OnCollisionEnter2D (Collision2D collision) {

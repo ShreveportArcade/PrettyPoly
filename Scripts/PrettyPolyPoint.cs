@@ -29,12 +29,12 @@ public class PrettyPolyPoint {
     public Color color = Color.white;
     public float size = 1;
 
-    public PrettyPolyPoint (PrettyPolyPoint platformPoint) {
-        this.position = platformPoint.position;
-        this.inTangent = platformPoint.inTangent;
-        this.outTangent = platformPoint.outTangent;
-        this.color = platformPoint.color;
-        this.size = platformPoint.size;
+    public PrettyPolyPoint (PrettyPolyPoint point) {
+        this.position = point.position;
+        this.inTangent = point.inTangent;
+        this.outTangent = point.outTangent;
+        this.color = point.color;
+        this.size = point.size;
     }
 
     public PrettyPolyPoint (Vector3 position) {
