@@ -65,9 +65,12 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
     [Tooltip("Solid edge join type for concave angles.")]
     public JoinType innerJoinType = JoinType.None;
 
-    [Tooltip("If false, the sprite is tiled.\n Otherwise, a single quad is used for edges.")]
-    public bool allowStretching = false;
-    
+    [Tooltip("Bends less than this angle do not use a join.")]
+    [Range(0,89)] public float minJoinAngle = 5;
+
+    [Tooltip("Max units a quad can be stretched to fill gaps.")]
+    public float maxStretch = 0.1f;
+
     [Tooltip("If true, this layer gives collision callbacks.")]
     public bool isTrigger = false;
 
@@ -209,6 +212,9 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
         
         float currCavity = Vector3.Cross(prevOut, currOut).z;
         float nextCavity = Vector3.Cross(currOut, nextOut).z;
+
+        bool hasPrevJoin = Vector2.Angle(prevOut, currOut) > minJoinAngle;
+        bool hasNextJoin = Vector2.Angle(nextOut, currOut) > minJoinAngle;
         
         for (int i = 1; i < segments; i++) {
             Random.InitState(index + seed);
@@ -233,6 +239,9 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             currCavity = nextCavity;
             nextCavity = Vector3.Cross(currOut, nextOut).z;
 
+            hasPrevJoin = hasNextJoin;
+            hasNextJoin = Vector2.Angle(nextOut, currOut) > minJoinAngle;
+
             distTraveled += Vector3.Distance(curr, next);
             float t = distTraveled / pathLength;
             float size = GetSize(t);
@@ -247,8 +256,7 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 Line2D lineC = new Line2D(nextOut, nextOut + futureDir);
                 Vector3 abIntersect = (Vector3)lineA.Intersect(lineB);
                 Vector3 bcIntersect = (Vector3)lineB.Intersect(lineC);
-                
-                if (!hasDepth && prevOutExists && (closed || i != 1)) {
+                if (!hasDepth && prevOutExists && (closed || i != 1) && Vector2.Angle(prevOut, currOut) > minJoinAngle) {
                     if (currCavity < 0) {
                         switch (outerJoinType) {
                             case JoinType.Miter:
@@ -282,12 +290,15 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
                 }
 
                 Vector3 outA = currOut;
-                Vector3 outB = currOut;
-                if (hasDepth) {
-                    if (prevOutExists && (closed || i != 1)) outA = Vector3.Lerp(outA, prevOut, 0.5f);
-                    if (nextOutExists) outB = Vector3.Lerp(outB, nextOut, 0.5f);
+                if (prevOutExists && (closed || i != 1) && (hasDepth || !hasPrevJoin)) {
+                    outA = Vector3.Lerp(currOut, prevOut, 0.5f);
                 }
-                else if (nextOutExists && nextCavity > 0) {
+                Vector3 outB = currOut;
+                if (nextOutExists && (closed || i < points.Length-1) && (hasDepth || !hasNextJoin)) {
+                    outB = Vector3.Lerp(currOut, nextOut, 0.5f);
+                }
+
+                if (!hasDepth && nextOutExists && hasNextJoin && nextCavity > 0 && hasNextJoin) {
                     b = next + (bcIntersect - currOut) * size;
                 }
                 
@@ -307,6 +318,8 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
         Vector3 dir = (b - a).normalized;
         float dist = Vector3.Distance(a, b);
         float segLen = size * GetWidthToHeightRatio();
+        segLen = Mathf.Max(segLen, dist / Mathf.Ceil(dist / (segLen + maxStretch)));
+
         Vector3 o = hasDepth ? Vector3.forward : outA;
         o *= size;
         Vector3 n = hasDepth ? outA : Vector3.back;
@@ -318,25 +331,22 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
         float nextUvFrac = uvFrac + (distToNext / segLen);
         Vector3 curr = a;
         Vector3 next = a + dir * distToNext;
-        if (allowStretching) {
-            distToNext = dist;
-            uvFrac = 0;
-            nextUvFrac = 1;
-            curr = a;
-            next = b;
-        }
 
+        Vector3 oA = o;
+        Vector3 oB = o;
+        if (!hasDepth) oB = Vector3.Lerp(outA, outB, distToNext / dist).normalized * size;
         while (distTraveled < dist) {
+            distTraveled += distToNext;
+            
             verts.AddRange(new Vector3[] {
-                curr + o,
-                next + o, 
+                curr + oA,
+                next + oB, 
                 next,
                 curr
             });
             
             uvs.AddRange(GetSpriteUVs(uvFrac, nextUvFrac));
             colors.AddRange(new Color[] {c, c, c, c});
-            distTraveled += distToNext;
             if (hasDepth && smoothNormals) {
                 Vector3 nextN = Vector3.Lerp(outA, outB, distTraveled / dist).normalized;
                 norms.AddRange(new Vector3[] {n, nextN, nextN, n});
@@ -348,10 +358,15 @@ public class PrettyPolyMeshLayer : PrettyPolyLayer {
             index += 4;
 
             uvFrac = nextUvFrac % 1f;
-            distToNext = Mathf.Min(segLen * (1 - uvFrac), dist - distTraveled);
+            distToNext = Mathf.Min(segLen * (1 - uvFrac%1f), dist - distTraveled);
             nextUvFrac = uvFrac + (distToNext / segLen);
             curr = next;
             next = curr + dir * distToNext;
+
+            if (!hasDepth) {
+                oA = oB;
+                oB = Vector3.Lerp(outA, outB, Mathf.Clamp01((distTraveled+distToNext) / dist)).normalized * size;
+            }
         }
     }
 
